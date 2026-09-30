@@ -1,6 +1,7 @@
 package org.owntracks.android.services
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.owntracks.android.services.MotionActivityClassifier.Activity
 
@@ -49,6 +50,13 @@ class MotionActivityClassifierTest {
     val classifier = MotionActivityClassifier()
     classifier.walk(start, start + 2 * minute, perMinute = 162)
     assertEquals(Activity.RUNNING, classifier.classify(start + 2 * minute))
+  }
+
+  @Test
+  fun `Moving around a room is not walking`() {
+    val classifier = MotionActivityClassifier()
+    classifier.walk(start, start + 2 * minute, perMinute = 20)
+    assertNotEquals(Activity.WALKING, classifier.classify(start + 2 * minute))
   }
 
   @Test
