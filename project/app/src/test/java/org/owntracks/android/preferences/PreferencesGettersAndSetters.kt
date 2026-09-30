@@ -127,6 +127,7 @@ class PreferencesGettersAndSetters(private val parameter: Parameter) {
                   false,
                   preferenceValueInConfiguration = "Nonsense",
               ),
+              Parameter("gnssFallbackAccuracy", 400, Int::class, false),
               Parameter("host", "testHost", String::class, false),
               Parameter("ignoreInaccurateLocations", 123, Int::class, false),
               Parameter("ignoreStaleLocations", 456f, Float::class, false),

@@ -32,6 +32,7 @@ interface DefaultsProvider {
       Preferences::encryptionKey -> ""
       Preferences::experimentalFeatures -> emptySet<String>()
       Preferences::fusedRegionDetection -> true
+      Preferences::gnssFallbackAccuracy -> 0
       Preferences::firstStart -> true
       Preferences::host -> ""
       Preferences::allowIntentControl -> false

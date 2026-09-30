@@ -247,6 +247,8 @@ constructor(
 
   @Preference var fusedRegionDetection: Boolean by preferencesStore
 
+  @Preference var gnssFallbackAccuracy: Int by preferencesStore
+
   @Preference(exportModeHttp = false) var host: String by preferencesStore
 
   @Preference(exportModeMqtt = false, exportModeHttp = false, importable = false)
