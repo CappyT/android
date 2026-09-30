@@ -155,15 +155,16 @@ class GnssFallbackPolicyTest {
   }
 
   @Test
-  fun `An accurate location after a held back motion cancels its window`() {
+  fun `An accurate location after a held back motion is published and cancels its window`() {
     val policy = GnssFallbackPolicy(400, interval, motionAware = true)
     assertTrue(policy.onMotion(0))
     policy.fresh(30f, 1_000)
     policy.onMotion(200_000)
-    policy.onLocation(30f, 190_000, 210_000)
+    assertEquals(Action.NONE, policy.onLocation(30f, 190_000, 210_000))
     assertEquals(interval, policy.pendingMotionWindowAt)
-    policy.fresh(30f, 220_000)
+    assertEquals(Action.PUBLISH, policy.fresh(30f, 220_000))
     assertEquals(null, policy.pendingMotionWindowAt)
+    assertEquals(Action.NONE, policy.fresh(30f, 230_000))
     assertEquals(Action.NONE, policy.onCheck(interval))
   }
 
