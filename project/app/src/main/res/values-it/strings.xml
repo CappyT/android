@@ -172,6 +172,9 @@ Per permetterlo, abilita la geocolizzazione nelle impostazioni del dispositivo."
     <string name="preferencesExperimental">"Sperimentale"</string>
     <string name="preferencesExportError">"Errore nell\'esportazione della configurazione"</string>
     <string name="preferencesExportSuccess">"Esportazione avvenuta con successo"</string>
+    <string name="preferencesGnssFallbackAccuracy">"Accuratezza per il ripiego su GNSS"</string>
+    <string name="preferencesGnssFallbackAccuracyDialog">"Richiede una singola posizione GNSS quando nell\'intervallo di posizionamento non arriva nessuna posizione con accuratezza migliore dei metri impostati. 0 la disattiva."</string>
+    <string name="preferencesGnssFallbackAccuracySummary">"Usa il GNSS quando le posizioni a basso consumo mancano o sono inaccurate"</string>
     <string name="preferencesHost">"Host"</string>
     <string name="preferencesHostValidationError">"Non può esser vuoto"</string>
     <string name="preferencesIgnoreInaccurateLocations">"Posizioni inaccurate"</string>
@@ -191,6 +194,8 @@ Per permetterlo, abilita la geocolizzazione nelle impostazioni del dispositivo."
     <string name="preferencesLocatorIntervalDialog">"Frequenza per l\'aggiornamento dal dispositivo (secondi)"</string>
     <string name="preferencesLocatorIntervalSummary">"Intervallo tra aggiornamenti della posizione"</string>
     <string name="preferencesMap">"Mappa"</string>
+    <string name="preferencesMotionActivities">"Attività di movimento"</string>
+    <string name="preferencesMotionActivitiesSummary">"Rileva camminata, corsa, guida o immobilità dal contapassi e dai sensori di movimento, e la include nei messaggi di posizione"</string>
     <string name="preferencesMoveModeLocatorInterval">"Intervallo di posizionamento (Modalità movimento)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Frequenza per l'aggiornamento dal dispositivo in Modalità movimento (secondi)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Intervallo tra aggiornamenti della posizione in Modalità movimento"</string>

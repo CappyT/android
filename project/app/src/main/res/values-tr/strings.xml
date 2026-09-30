@@ -164,6 +164,9 @@ To allow this, please enable Location in the device settings."</string>
     <string name="preferencesEncryptionKeySummary">"Symmetric key for payload encryption"</string>
     <string name="preferencesExperimental">"Deneysel"</string>
     <string name="preferencesExportSuccess">"Dışa aktarma başarılı"</string>
+    <string name="preferencesGnssFallbackAccuracy">"GNSS yedek doğruluğu"</string>
+    <string name="preferencesGnssFallbackAccuracyDialog">"Konum aralığı içinde belirtilen metreden daha doğru bir konum gelmezse tek bir GNSS konumu iste. 0 devre dışı bırakır."</string>
+    <string name="preferencesGnssFallbackAccuracySummary">"Düşük güçlü konumlar eksik veya hatalı olduğunda GNSS\'e geç"</string>
     <string name="preferencesHost">"Host"</string>
     <string name="preferencesIgnoreInaccurateLocations">"Inaccurate locations"</string>
     <string name="preferencesIgnoreInaccurateLocationsDialog">"Ignore location, if the accuracy is greater than the given meters"</string>
@@ -177,6 +180,8 @@ To allow this, please enable Location in the device settings."</string>
     <string name="preferencesLocatorIntervalDialog">"How often should locations be requested from the device (seconds)"</string>
     <string name="preferencesLocatorIntervalSummary">"Interval between location updates"</string>
     <string name="preferencesMap">"Harita"</string>
+    <string name="preferencesMotionActivities">"Hareket etkinliği"</string>
+    <string name="preferencesMotionActivitiesSummary">"Adım sayar ve hareket sensörleriyle yürüme, koşma, sürüş veya hareketsizliği algıla ve konum mesajlarına ekle"</string>
     <string name="preferencesMoveModeLocatorInterval">"Location interval (Move mode)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"How often should locations be requested from the device whilst in Move mode (seconds)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Interval between location updates in Move mode"</string>
