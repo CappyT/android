@@ -236,6 +236,8 @@ To allow this, please enable Location in the device settings."</string>
     <string name="preferencesGnssFallbackAccuracy">"GNSS fallback accuracy"</string>
     <string name="preferencesGnssFallbackAccuracyDialog">"Request a single GNSS fix when no location better than the given meters arrives within the locator interval. 0 disables it."</string>
     <string name="preferencesGnssFallbackAccuracySummary">"Fall back to GNSS when low-power locations are missing or inaccurate"</string>
+    <string name="preferencesMotionActivities">"Motion activity"</string>
+    <string name="preferencesMotionActivitiesSummary">"Detect walking, running, driving or standing still from the step counter and motion sensors, and include it in location messages"</string>
     <string name="preferencesImportNoURIGiven">"No URI given for importing configuration"</string>
     <string name="preferencesKeepalive">"Keepalive"</string>
     <string name="preferencesKeepaliveDialogMessage">"How often should the client send a keepalive message to the broker (seconds)"</string>

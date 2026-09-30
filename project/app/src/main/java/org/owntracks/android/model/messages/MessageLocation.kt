@@ -106,6 +106,8 @@ open class MessageLocation(
 
   @SerialName("inregions") var inregions: List<String>? = null
 
+  @SerialName("motionactivities") var motionActivities: List<String>? = null
+
   @SerialName("BSSID") var bssid: String? = null
 
   @SerialName("SSID") var ssid: String? = null

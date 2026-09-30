@@ -1,9 +1,13 @@
 package org.owntracks.android.ui.preferences
 
+import android.Manifest.permission.ACTIVITY_RECOGNITION
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.SwitchPreferenceCompat
@@ -19,6 +23,14 @@ import org.owntracks.android.support.RequirementsChecker
 class AdvancedFragment @Inject constructor() :
     AbstractPreferenceFragment(), Preferences.OnPreferenceChangeListener {
   @Inject lateinit var requirementsChecker: RequirementsChecker
+
+  private val activityRecognitionRequest =
+      registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+          findPreference<SwitchPreferenceCompat>(Preferences::motionActivities.name)?.isChecked =
+              true
+        }
+      }
 
   override fun onAttach(context: Context) {
     super.onAttach(context)
@@ -85,6 +97,23 @@ class AdvancedFragment @Inject constructor() :
           }
         }
     setOpenCageAPIKeyPreferenceVisibility()
+
+    findPreference<SwitchPreferenceCompat>(Preferences::motionActivities.name)
+        ?.onPreferenceChangeListener =
+        Preference.OnPreferenceChangeListener { _, newValue ->
+          if (
+              newValue == true &&
+                  Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                  ContextCompat.checkSelfPermission(requireContext(), ACTIVITY_RECOGNITION) !=
+                      PackageManager.PERMISSION_GRANTED
+          ) {
+            // The permission callback turns the switch on once granted.
+            activityRecognitionRequest.launch(ACTIVITY_RECOGNITION)
+            false
+          } else {
+            true
+          }
+        }
   }
 
   private fun setOpenCageAPIKeyPreferenceVisibility() {

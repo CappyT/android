@@ -286,6 +286,8 @@ constructor(
 
   @Preference var monitoring: MonitoringMode by preferencesStore
 
+  @Preference var motionActivities: Boolean by preferencesStore
+
   @Preference var moveModeLocatorInterval: Int by preferencesStore
 
   @Preference(exportModeHttp = false) var mqttProtocolLevel: MqttProtocolLevel by preferencesStore

@@ -49,6 +49,7 @@ interface DefaultsProvider {
       Preferences::maxImplausibleSpeedKmh -> 0
       Preferences::mode -> ConnectionMode.MQTT
       Preferences::monitoring -> MonitoringMode.Significant
+      Preferences::motionActivities -> false
       Preferences::moveModeLocatorInterval -> 10
       Preferences::mqttProtocolLevel -> MqttProtocolLevel.MQTT_3_1
       Preferences::notificationEvents -> true

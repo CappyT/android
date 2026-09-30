@@ -189,6 +189,7 @@ class PreferencesGettersAndSetters(private val parameter: Parameter) {
                   false,
                   preferenceValueInConfiguration = -1,
               ),
+              Parameter("motionActivities", true, Boolean::class, false),
               Parameter("moveModeLocatorInterval", 1500, Int::class, false),
               Parameter(
                   "mqttProtocolLevel",
