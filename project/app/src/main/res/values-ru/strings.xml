@@ -188,6 +188,9 @@
     <string name="preferencesExperimental">"Экспериментальные"</string>
     <string name="preferencesExportError">"Не удалось экспортировать настройки"</string>
     <string name="preferencesExportSuccess">"Настройки экспортированы"</string>
+    <string name="preferencesGnssFallbackAccuracy">"Точность резервного GNSS"</string>
+    <string name="preferencesGnssFallbackAccuracyDialog">"Запрашивать одно определение по GNSS, если за интервал определения местоположения не пришло местоположение точнее заданного числа метров. 0 отключает функцию."</string>
+    <string name="preferencesGnssFallbackAccuracySummary">"Использовать GNSS, когда энергосберегающие местоположения отсутствуют или неточны"</string>
     <string name="preferencesHost">"Адрес"</string>
     <string name="preferencesHostValidationError">"Не может быть пустым"</string>
     <string name="preferencesIgnoreInaccurateLocations">"Неточные местоположения"</string>
@@ -207,6 +210,8 @@
     <string name="preferencesLocatorIntervalDialog">"Как часто должно запрашиваться местоположение у устройства (в секундах)"</string>
     <string name="preferencesLocatorIntervalSummary">"Интервал между обновлениями местоположения"</string>
     <string name="preferencesMap">"Карта"</string>
+    <string name="preferencesMotionActivities">"Двигательная активность"</string>
+    <string name="preferencesMotionActivitiesSummary">"Определять ходьбу, бег, поездку или неподвижность по шагомеру и датчикам движения и добавлять это в сообщения о местоположении"</string>
     <string name="preferencesMoveModeLocatorInterval">"Интервал определения местоположения (Режим отслеживания перемещений)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Как часто должно запрашиваться местоположение у устройства в режиме отслеживания перемещений (в секундах)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Интервал между обновлениями местоположения в режиме отслеживания перемещений"</string>

@@ -172,6 +172,9 @@
     <string name="preferencesExperimental">"נסיוני"</string>
     <string name="preferencesExportError">"שגיאה בייצוא התצורה"</string>
     <string name="preferencesExportSuccess">"הייצוא הצליח"</string>
+    <string name="preferencesGnssFallbackAccuracy">"דיוק לגיבוי GNSS"</string>
+    <string name="preferencesGnssFallbackAccuracyDialog">"בקש מיקום GNSS יחיד כאשר בתוך מרווח המיקום לא מתקבל מיקום מדויק יותר מהמטרים שהוגדרו. 0 מבטל."</string>
+    <string name="preferencesGnssFallbackAccuracySummary">"עבור ל-GNSS כאשר מיקומים בצריכת חשמל נמוכה חסרים או לא מדויקים"</string>
     <string name="preferencesHost">"מארח"</string>
     <string name="preferencesHostValidationError">"לא יכול להיות ריק"</string>
     <string name="preferencesIgnoreInaccurateLocations">"מיקומים לא מדויקים"</string>
@@ -190,6 +193,8 @@
     <string name="preferencesLocatorIntervalDialog">"באיזו תדירות יש לבקש מיקומים מהמכשיר (שניות)"</string>
     <string name="preferencesLocatorIntervalSummary">"מרווח בין עדכוני מיקום"</string>
     <string name="preferencesMap">"מפה"</string>
+    <string name="preferencesMotionActivities">"פעילות תנועה"</string>
+    <string name="preferencesMotionActivitiesSummary">"זיהוי הליכה, ריצה, נסיעה או עמידה במקום באמצעות מד הצעדים וחיישני התנועה, והוספתם להודעות המיקום"</string>
     <string name="preferencesMoveModeLocatorInterval">"מרווח מיקום (מצב תנועה)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"באיזו תדירות יש לבקש מיקומים מהמכשיר בזמן תנועה (שניות)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"מרווח בין עדכוני מיקום במצב תזוזה"</string>

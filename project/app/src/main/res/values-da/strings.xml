@@ -181,6 +181,9 @@ Slå venligst position til i enhedsindstillingerne for at løse dette."</string>
     <string name="preferencesExperimental">"Eksperimentel"</string>
     <string name="preferencesExportError">"Fejl ved eksportering af konfiguration"</string>
     <string name="preferencesExportSuccess">"Eksport lykkedes"</string>
+    <string name="preferencesGnssFallbackAccuracy">"Nøjagtighed for GNSS-reserve"</string>
+    <string name="preferencesGnssFallbackAccuracyDialog">"Anmod om én GNSS-position, når der inden for positionsintervallet ikke kommer en position, der er mere præcis end det angivne antal meter. 0 slår det fra."</string>
+    <string name="preferencesGnssFallbackAccuracySummary">"Brug GNSS, når strømbesparende positioner mangler eller er upræcise"</string>
     <string name="preferencesHost">"Vært"</string>
     <string name="preferencesHostValidationError">"Kan ikke være tom"</string>
     <string name="preferencesIgnoreInaccurateLocations">"Upræcise positioner"</string>
@@ -198,6 +201,8 @@ Slå venligst position til i enhedsindstillingerne for at løse dette."</string>
     <string name="preferencesLocatorIntervalDialog">"Hvor ofte skal positioner anmodes fra enheden (sekunder)"</string>
     <string name="preferencesLocatorIntervalSummary">"Interval mellem positionsopdateringer"</string>
     <string name="preferencesMap">"Kort"</string>
+    <string name="preferencesMotionActivities">"Bevægelsesaktivitet"</string>
+    <string name="preferencesMotionActivitiesSummary">"Registrér gang, løb, kørsel eller stilstand med skridttælleren og bevægelsessensorerne, og medtag det i positionsbeskeder"</string>
     <string name="preferencesMoveModeLocatorInterval">"Positionsinterval (Bevægelse tilstand)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Hvor ofte skal positioner anmodes fra enheden i Bevægelse tilstand (sekunder)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Interval mellem positionsopdateringer i Bevægelse tilstand"</string>

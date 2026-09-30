@@ -152,6 +152,9 @@
     <string name="preferencesEncryptionKeySummary">"Clave simétrica para encriptación del payload"</string>
     <string name="preferencesExperimental">"Experimental"</string>
     <string name="preferencesExportSuccess">"Preferencias exportadas"</string>
+    <string name="preferencesGnssFallbackAccuracy">"Precisión del recurso a GNSS"</string>
+    <string name="preferencesGnssFallbackAccuracyDialog">"Solicitar una única posición GNSS cuando no llega ninguna ubicación mejor que los metros indicados dentro del intervalo de ubicación. 0 lo desactiva."</string>
+    <string name="preferencesGnssFallbackAccuracySummary">"Recurrir a GNSS cuando las ubicaciones de bajo consumo faltan o son imprecisas"</string>
     <string name="preferencesHost">"Host"</string>
     <string name="preferencesIgnoreInaccurateLocations">"Ubicación imprecisa"</string>
     <string name="preferencesIgnoreInaccurateLocationsDialog">"Ignorar ubicación por encima del umbral"</string>
@@ -165,6 +168,8 @@
     <string name="preferencesLocatorIntervalDialog">"Cada cuánto tiempo se deben solicitar ubicaciones del dispositivo (segundos)"</string>
     <string name="preferencesLocatorIntervalSummary">"Intervalo entre actualizaciones de ubicación"</string>
     <string name="preferencesMap">"Mapa"</string>
+    <string name="preferencesMotionActivities">"Actividad de movimiento"</string>
+    <string name="preferencesMotionActivitiesSummary">"Detectar si caminas, corres, conduces o estás quieto con el podómetro y los sensores de movimiento, e incluirlo en los mensajes de ubicación"</string>
     <string name="preferencesMoveModeLocatorInterval">"Intervalo de ubicación (modo Movimiento)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Cada cuánto tiempo se deben solicitar ubicaciones del dispositivo en modo Movimiento (segundos)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Intervalo entre actualizaciones de ubicación en modo Movimiento"</string>

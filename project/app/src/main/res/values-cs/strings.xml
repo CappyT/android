@@ -169,6 +169,9 @@ Chcete-li to umožnit, zapněte polohu v nastavení zařízení."</string>
     <string name="preferencesEncryptionKeySummary">"Symetrický klíč pro šifrování dat"</string>
     <string name="preferencesExperimental">"Experimentální"</string>
     <string name="preferencesExportSuccess">"Export byl úspěšný"</string>
+    <string name="preferencesGnssFallbackAccuracy">"Přesnost záložního GNSS"</string>
+    <string name="preferencesGnssFallbackAccuracyDialog">"Vyžádat jednu polohu z GNSS, pokud během intervalu polohy nepřijde žádná poloha přesnější než zadaný počet metrů. 0 funkci vypne."</string>
+    <string name="preferencesGnssFallbackAccuracySummary">"Použít GNSS, když úsporné polohy chybí nebo jsou nepřesné"</string>
     <string name="preferencesHost">"Server"</string>
     <string name="preferencesHostValidationError">"Nemůže být prázdný"</string>
     <string name="preferencesIgnoreInaccurateLocations">"Nepřesné polohy"</string>
@@ -186,6 +189,8 @@ Chcete-li to umožnit, zapněte polohu v nastavení zařízení."</string>
     <string name="preferencesLocatorIntervalDialog">"Jak často se dotazovat zařízení na jeho polohu (ve vteřinách)"</string>
     <string name="preferencesLocatorIntervalSummary">"Interval aktualizace polohy"</string>
     <string name="preferencesMap">"Mapa"</string>
+    <string name="preferencesMotionActivities">"Pohybová aktivita"</string>
+    <string name="preferencesMotionActivitiesSummary">"Rozpoznat chůzi, běh, jízdu nebo stání pomocí krokoměru a pohybových senzorů a přidat je do zpráv o poloze"</string>
     <string name="preferencesMoveModeLocatorInterval">"Interval polohy (Mód pohybu)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Jak často se dotazovat zařízení na jeho polohu v Módu pohybu (ve vteřinách)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Interval aktualizace polohy v Módu pohybu"</string>

@@ -167,6 +167,9 @@
     <string name="preferencesExperimental">"Experimental"</string>
     <string name="preferencesExportError">"Erro ao exportar configuração"</string>
     <string name="preferencesExportSuccess">"Exportação bem sucedida"</string>
+    <string name="preferencesGnssFallbackAccuracy">"Precisão do recurso ao GNSS"</string>
+    <string name="preferencesGnssFallbackAccuracyDialog">"Pedir uma única posição GNSS quando nenhuma localização melhor do que os metros indicados chega dentro do intervalo de localização. 0 desativa."</string>
+    <string name="preferencesGnssFallbackAccuracySummary">"Recorrer ao GNSS quando as localizações de baixo consumo faltam ou são imprecisas"</string>
     <string name="preferencesHost">"Anfitrião"</string>
     <string name="preferencesHostValidationError">"Introduzir informação"</string>
     <string name="preferencesIgnoreInaccurateLocations">"Localizações imprecisas"</string>
@@ -182,6 +185,8 @@
     <string name="preferencesLocatorIntervalDialog">"Quão regularmente deveriam as localizações ser requisitadas deste dispositivo(segundos)"</string>
     <string name="preferencesLocatorIntervalSummary">"Intervalo entre atualizações"</string>
     <string name="preferencesMap">"Mapa"</string>
+    <string name="preferencesMotionActivities">"Atividade de movimento"</string>
+    <string name="preferencesMotionActivitiesSummary">"Detectar caminhada, corrida, condução ou imobilidade com o contador de passos e os sensores de movimento, e incluí-la nas mensagens de localização"</string>
     <string name="preferencesMoveModeLocatorInterval">"Intervalo de localização (Modo de Movimento)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Quão regularmente deveriam as localizações serem requisitadas deste dispositivo enquanto está no modo Move"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Intervalo entre updates de localização no modo Move"</string>

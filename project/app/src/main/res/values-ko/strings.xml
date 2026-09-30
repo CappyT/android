@@ -156,6 +156,9 @@
     <string name="preferencesEncryptionKeySummary">"페이로드 암호화를 위한 공통 키"</string>
     <string name="preferencesExperimental">"시험 단계"</string>
     <string name="preferencesExportSuccess">"내보내기에 성공했습니다"</string>
+    <string name="preferencesGnssFallbackAccuracy">"GNSS 대체 정확도"</string>
+    <string name="preferencesGnssFallbackAccuracyDialog">"위치 정보 업데이트 간격 안에 지정한 미터보다 정확한 위치 정보가 없으면 GNSS 위치를 한 번 요청합니다. 0이면 사용하지 않습니다."</string>
+    <string name="preferencesGnssFallbackAccuracySummary">"저전력 위치 정보가 없거나 부정확하면 GNSS 사용"</string>
     <string name="preferencesHost">"호스트"</string>
     <string name="preferencesIgnoreInaccurateLocations">"낮은 정밀 위치 정보"</string>
     <string name="preferencesIgnoreInaccurateLocationsDialog">"위치 정보의 정밀도가 지정된 미터 값보다 큰 경우 해당 위치 정보를 무시합니다."</string>
@@ -172,6 +175,8 @@
     <string name="preferencesLocatorIntervalDialog">"기기에서 위치 정보를 요청하는 시간 간격 (초)"</string>
     <string name="preferencesLocatorIntervalSummary">"위치 정보를 업데이트하는 시간 간격"</string>
     <string name="preferencesMap">"지도"</string>
+    <string name="preferencesMotionActivities">"움직임 활동"</string>
+    <string name="preferencesMotionActivitiesSummary">"걸음 수 센서와 동작 센서로 걷기, 달리기, 운전, 정지 상태를 감지해 위치 메시지에 포함합니다"</string>
     <string name="preferencesMoveModeLocatorInterval">"위치 업데이트 간격 (이동 모드)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"이동 모드에서 기기에서 위치 정보를 요청하는 시간 간격 (초)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"이동 모드에서 위치 정보를 업데이트하는 시간 간격"</string>

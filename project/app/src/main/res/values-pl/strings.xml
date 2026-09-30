@@ -168,6 +168,9 @@ Aby to umożliwić, włącz lokalizację w ustawieniach urządzenia."</string>
     <string name="preferencesEncryptionKeySummary">"Klucz symetryczny do szyfrowania danych"</string>
     <string name="preferencesExperimental">"Eksperymentalne"</string>
     <string name="preferencesExportSuccess">"Eksport udany"</string>
+    <string name="preferencesGnssFallbackAccuracy">"Dokładność awaryjnego GNSS"</string>
+    <string name="preferencesGnssFallbackAccuracyDialog">"Poproś o jedną pozycję GNSS, gdy w interwale pozycjonowania nie nadejdzie lokalizacja dokładniejsza niż podana liczba metrów. 0 wyłącza."</string>
+    <string name="preferencesGnssFallbackAccuracySummary">"Użyj GNSS, gdy brakuje energooszczędnych lokalizacji lub są niedokładne"</string>
     <string name="preferencesHost">"Host"</string>
     <string name="preferencesIgnoreInaccurateLocations">"Niedokładne lokalizacje"</string>
     <string name="preferencesIgnoreInaccurateLocationsDialog">"Ignoruj lokalizację, jeśli dokładność jest większa niż podana liczba metrów"</string>
@@ -184,6 +187,8 @@ Aby to umożliwić, włącz lokalizację w ustawieniach urządzenia."</string>
     <string name="preferencesLocatorIntervalDialog">"Jak często urządzenie ma zwracać lokalizację (sekundy)"</string>
     <string name="preferencesLocatorIntervalSummary">"Interwał pomiędzy aktualizacjami lokalizacji"</string>
     <string name="preferencesMap">"Mapa"</string>
+    <string name="preferencesMotionActivities">"Aktywność ruchowa"</string>
+    <string name="preferencesMotionActivitiesSummary">"Rozpoznawaj chodzenie, bieganie, jazdę lub bezruch za pomocą krokomierza i czujników ruchu i dołączaj je do wiadomości o lokalizacji"</string>
     <string name="preferencesMoveModeLocatorInterval">"Interwał lokalizacji (tryb poruszania)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Jak często urządzenie ma zwracać lokalizację w trybie poruszania (sekundy)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Interwał aktualizacji pozycji w trybie poruszania"</string>

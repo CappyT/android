@@ -147,6 +147,9 @@
     <string name="preferencesExperimental">"Katseline"</string>
     <string name="preferencesExportError">"Viga seadistuste eksportimisel"</string>
     <string name="preferencesExportSuccess">"Eksportimine õnnestus"</string>
+    <string name="preferencesGnssFallbackAccuracy">"GNSS-varulahenduse täpsus"</string>
+    <string name="preferencesGnssFallbackAccuracyDialog">"Küsi üks GNSS-asukoht, kui asukoha tuvastamise välba jooksul ei saabu määratud meetritest täpsemat asukohta. 0 lülitab välja."</string>
+    <string name="preferencesGnssFallbackAccuracySummary">"Kasuta GNSS-i, kui vähese energiakuluga asukohad puuduvad või on ebatäpsed"</string>
     <string name="preferencesHost">"Server"</string>
     <string name="preferencesHostValidationError">"Ei tohi jääda tühjaks"</string>
     <string name="preferencesIgnoreInaccurateLocations">"Ebatäpsed asukohad"</string>
@@ -165,6 +168,8 @@
     <string name="preferencesLocatorIntervalDialog">"Telefoni asukohapäringute välp (sekundites)"</string>
     <string name="preferencesLocatorIntervalSummary">"Välp asukohauuenduste vahel"</string>
     <string name="preferencesMap">"Kaart"</string>
+    <string name="preferencesMotionActivities">"Liikumistegevus"</string>
+    <string name="preferencesMotionActivitiesSummary">"Tuvasta sammulugeja ja liikumisandurite abil kõndimine, jooksmine, sõitmine või paigalseis ning lisa see asukohasõnumitesse"</string>
     <string name="preferencesNotification">"Teavitused"</string>
     <string name="preferencesNotificationEvents">"Sündmused"</string>
     <string name="preferencesNotificationEventsSummary">"Teavita sündmuste sõnumitest"</string>
