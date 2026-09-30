@@ -32,8 +32,9 @@ import timber.log.Timber
  * two apart: it keeps delivering locations while the device is still, and goes quiet when the
  * low-power providers have nothing to offer. A periodic check catches the quiet case.
  *
- * When the significant motion sensor fires, the probe polls faster for a short window. The first
- * accurate location in that window is published, and if none arrives, a GNSS fix is requested.
+ * When the significant motion sensor fires, or the device joins or leaves Wi-Fi, the probe polls
+ * faster for a short window. The first accurate location in that window is published, and if none
+ * arrives, a GNSS fix is requested.
  */
 class GnssFallback(
     private val context: Context,
@@ -82,7 +83,7 @@ class GnssFallback(
               }
           when (action) {
             GnssFallbackPolicy.Action.PUBLISH -> {
-              Timber.d("GNSS fallback: publishing the first accurate location after a motion")
+              Timber.d("GNSS fallback: publishing the first accurate location after a movement")
               publishCallback.onLocationResult(locationResult)
             }
             GnssFallbackPolicy.Action.REQUEST_GNSS -> {
@@ -123,8 +124,14 @@ class GnssFallback(
   private val motionListener =
       object : TriggerEventListener() {
         override fun onTrigger(event: TriggerEvent?) {
-          onMotion()
+          armMotionSensor()
+          onMovementHint("motion detected")
         }
+      }
+
+  private val wifiLinkWatcher =
+      WifiLinkWatcher(context) { joined ->
+        onMovementHint(if (joined) "Wi-Fi joined" else "Wi-Fi lost")
       }
 
   /**
@@ -155,6 +162,7 @@ class GnssFallback(
     registerProbe(interval)
     scheduleNextCheck()
     armMotionSensor()
+    wifiLinkWatcher.start()
   }
 
   /** Runs the check fired by the alarm set up in [scheduleCheck]. */
@@ -176,21 +184,20 @@ class GnssFallback(
     scheduleNextCheck()
   }
 
-  private fun onMotion() {
-    armMotionSensor()
+  private fun onMovementHint(reason: String) {
     val now = SystemClock.elapsedRealtime()
     val (windowStarted, pendingAt) =
         synchronized(this) { policy?.let { it.onMotion(now) to it.pendingMotionWindowAt } }
             ?: return
     if (!windowStarted) {
+      Timber.d("GNSS fallback: $reason, held back, window in ${pendingAt?.minus(now)}ms")
       // The check that runs first opens the window, so only bring it forward.
       if (pendingAt != null && pendingAt < checkAt) {
-        Timber.d("GNSS fallback: motion held back, window in ${pendingAt - now}ms")
         scheduleCheck(pendingAt - now)
       }
       return
     }
-    Timber.d("GNSS fallback: motion detected, looking for a low-power location")
+    Timber.d("GNSS fallback: $reason, looking for a low-power location")
     startMotionWindow()
   }
 
@@ -232,6 +239,7 @@ class GnssFallback(
     locationProviderClient.removeLocationUpdates(probeCallback)
     alarmManager.cancel(checkIntent)
     motionSensor?.let { sensorManager.cancelTriggerSensor(motionListener, it) }
+    wifiLinkWatcher.stop()
     Timber.d("GNSS fallback disabled")
   }
 
