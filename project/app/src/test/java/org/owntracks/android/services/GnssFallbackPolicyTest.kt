@@ -176,4 +176,17 @@ class GnssFallbackPolicyTest {
     assertEquals(Action.REQUEST_GNSS, policy.onCheck(60_000))
     assertEquals(interval, policy.pendingMotionWindowAt)
   }
+
+  @Test
+  fun `Locations within their accuracy circles are the same place`() {
+    assertTrue(GnssFallbackPolicy.isSamePlace(150f, 100f, 80f))
+    assertFalse(GnssFallbackPolicy.isSamePlace(200f, 100f, 80f))
+  }
+
+  @Test
+  fun `Accurate locations closer than 100 m are the same place`() {
+    assertTrue(GnssFallbackPolicy.isSamePlace(6f, 6f, 7f))
+    assertTrue(GnssFallbackPolicy.isSamePlace(100f, 6f, 7f))
+    assertFalse(GnssFallbackPolicy.isSamePlace(101f, 6f, 7f))
+  }
 }

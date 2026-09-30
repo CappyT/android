@@ -47,6 +47,7 @@ class GnssFallback(
     private val checkIntent: PendingIntent,
     private val looper: Looper,
     private val motionActivityTracker: MotionActivityTracker,
+    private val lastPublishedLocation: () -> Location?,
 ) {
   private val alarmManager by lazy {
     context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -86,8 +87,24 @@ class GnssFallback(
               }
           when (action) {
             GnssFallbackPolicy.Action.PUBLISH -> {
-              Timber.d("GNSS fallback: publishing the first accurate location after a movement")
-              publishCallback.onLocationResult(locationResult)
+              val published = lastPublishedLocation()
+              val distance = published?.let { location.distanceTo(it) }
+              if (
+                  published != null &&
+                      distance != null &&
+                      GnssFallbackPolicy.isSamePlace(
+                          distance,
+                          location.accuracy,
+                          published.accuracy,
+                      )
+              ) {
+                Timber.d(
+                    "GNSS fallback: location after a movement is ${distance}m away, same place"
+                )
+              } else {
+                Timber.d("GNSS fallback: publishing the first accurate location after a movement")
+                publishCallback.onLocationResult(locationResult)
+              }
             }
             GnssFallbackPolicy.Action.REQUEST_GNSS -> {
               Timber.d("GNSS fallback: location accuracy ${location.accuracy}m is too low")
