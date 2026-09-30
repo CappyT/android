@@ -7,7 +7,7 @@ package org.owntracks.android.services
  * a half locator intervals, or no accurate location within the window that follows a detected
  * motion. GNSS requests are rate limited to one per interval, and so are motion windows. A motion
  * that the rate limit holds back opens its window when the limit expires, unless an accurate
- * location arrives first.
+ * location arrives first. That location is then published, as the window would have done.
  *
  * With [motionAware], a missing location only counts as a gap after a motion. A still device keeps
  * its last accurate location, and Android throttles the low-power providers while it stays still.
@@ -69,13 +69,13 @@ class GnssFallbackPolicy(
   fun onLocation(accuracy: Float, fixedAt: Long, now: Long): Action =
       if (accuracy <= accuracyMeters) {
         lastAccurateLocationAt = maxOf(lastAccurateLocationAt ?: fixedAt, fixedAt)
-        if (fixedAt >= (lastMotionAt ?: 0)) {
-          motionPending = false
-        }
+        // The main request may hold this location back behind its displacement filter, but after a
+        // motion it is news.
         if (inMotionWindow && fixedAt >= motionWindowStartedAt) {
-          // The main request may hold this location back behind its displacement filter, but after
-          // a motion it is news.
           inMotionWindow = false
+          Action.PUBLISH
+        } else if (motionPending && fixedAt >= (lastMotionAt ?: 0)) {
+          motionPending = false
           Action.PUBLISH
         } else {
           Action.NONE
