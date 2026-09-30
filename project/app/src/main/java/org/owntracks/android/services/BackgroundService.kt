@@ -211,7 +211,9 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
             ),
             runThingsOnOtherThreads.getBackgroundLooper(),
             motionActivityTracker,
-        )
+        ) {
+          locationRepo.currentPublishedLocation.value
+        }
     motionActivityTracker.setEnabled(preferences.motionActivities)
 
     registerReceiver(

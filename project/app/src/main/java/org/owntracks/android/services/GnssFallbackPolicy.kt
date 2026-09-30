@@ -121,4 +121,16 @@ class GnssFallbackPolicy(
     lastGnssRequestAt = now
     return true
   }
+
+  companion object {
+    private const val SAME_PLACE_MIN_METERS = 100f
+
+    /**
+     * True when two locations can't be told apart: their accuracy circles overlap, or they are
+     * closer than [SAME_PLACE_MIN_METERS]. A location after a movement at the same place tells
+     * nobody anything new.
+     */
+    fun isSamePlace(distance: Float, accuracy: Float, otherAccuracy: Float): Boolean =
+        distance <= maxOf(accuracy + otherAccuracy, SAME_PLACE_MIN_METERS)
+  }
 }
