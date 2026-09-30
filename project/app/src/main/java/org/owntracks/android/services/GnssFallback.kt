@@ -8,6 +8,7 @@ import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.hardware.TriggerEvent
 import android.hardware.TriggerEventListener
+import android.location.Location
 import android.os.Looper
 import android.os.SystemClock
 import androidx.core.app.AlarmManagerCompat
@@ -32,9 +33,10 @@ import timber.log.Timber
  * two apart: it keeps delivering locations while the device is still, and goes quiet when the
  * low-power providers have nothing to offer. A periodic check catches the quiet case.
  *
- * When the significant motion sensor fires, or the device joins or leaves Wi-Fi, the probe polls
- * faster for a short window. The first accurate location in that window is published, and if none
- * arrives, a GNSS fix is requested.
+ * When the significant motion sensor fires, the device joins or leaves Wi-Fi, or [PlaceWatcher]
+ * sees a cell or Wi-Fi scan that doesn't belong to the last place, the probe polls faster for a
+ * short window. The first accurate location in that window is published, and if none arrives, a
+ * GNSS fix is requested.
  */
 class GnssFallback(
     private val context: Context,
@@ -95,6 +97,9 @@ class GnssFallback(
           if (action != null && action != GnssFallbackPolicy.Action.NONE) {
             endMotionWindow()
           }
+          if (action != null) {
+            recordPlace(location)
+          }
         }
 
         override fun onLocationError() {}
@@ -109,6 +114,7 @@ class GnssFallback(
           synchronized(this@GnssFallback) {
             policy?.onGnssFix(locationResult.lastLocation.elapsedRealtimeNanos / 1_000_000)
           }
+          recordPlace(locationResult.lastLocation)
           publishCallback.onLocationResult(locationResult)
         }
 
@@ -128,6 +134,8 @@ class GnssFallback(
           onMovementHint("motion detected")
         }
       }
+
+  private val placeWatcher = PlaceWatcher(context, ::onMovementHint)
 
   private val wifiLinkWatcher =
       WifiLinkWatcher(context) { joined ->
@@ -163,11 +171,13 @@ class GnssFallback(
     scheduleNextCheck()
     armMotionSensor()
     wifiLinkWatcher.start()
+    placeWatcher.start()
   }
 
   /** Runs the check fired by the alarm set up in [scheduleCheck]. */
   fun onCheck() {
     val action = synchronized(this) { policy?.onCheck(SystemClock.elapsedRealtime()) } ?: return
+    placeWatcher.checkCell()
     when (action) {
       GnssFallbackPolicy.Action.REQUEST_GNSS -> {
         Timber.d("GNSS fallback: no accurate location in time")
@@ -199,6 +209,14 @@ class GnssFallback(
     }
     Timber.d("GNSS fallback: $reason, looking for a low-power location")
     startMotionWindow()
+  }
+
+  /** Only fresh fixes describe where the device is now. */
+  private fun recordPlace(location: Location) {
+    val age = SystemClock.elapsedRealtimeNanos() - location.elapsedRealtimeNanos
+    if (location.accuracy <= policyAccuracy && age < PLACE_MAX_FIX_AGE.toNanos()) {
+      placeWatcher.onAccurateLocation(location.latitude, location.longitude)
+    }
   }
 
   private fun startMotionWindow() {
@@ -240,6 +258,7 @@ class GnssFallback(
     alarmManager.cancel(checkIntent)
     motionSensor?.let { sensorManager.cancelTriggerSensor(motionListener, it) }
     wifiLinkWatcher.stop()
+    placeWatcher.stop()
     Timber.d("GNSS fallback disabled")
   }
 
@@ -269,5 +288,6 @@ class GnssFallback(
   companion object {
     private val MOTION_PROBE_INTERVAL: Duration = Duration.ofSeconds(20)
     private val MOTION_WINDOW: Duration = Duration.ofSeconds(60)
+    private val PLACE_MAX_FIX_AGE: Duration = Duration.ofSeconds(60)
   }
 }
