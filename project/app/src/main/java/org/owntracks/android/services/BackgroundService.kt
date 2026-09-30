@@ -147,6 +147,7 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
 
   // Significant motion sensor for triggering location requests when device movement is detected
   private lateinit var significantMotionSensor: SignificantMotionSensor
+  private lateinit var gnssFallback: GnssFallback
 
   @EntryPoint
   @InstallIn(SingletonComponent::class)
@@ -190,6 +191,22 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
             locationProviderClient,
             requirementsChecker,
             callbackForReportType[MessageLocation.ReportType.SIGNIFICANT_MOTION]!!.value,
+            runThingsOnOtherThreads.getBackgroundLooper(),
+        )
+    gnssFallback =
+        GnssFallback(
+            this,
+            preferences,
+            locationProviderClient,
+            requirementsChecker,
+            callbackForReportType[MessageLocation.ReportType.DEFAULT]!!.value,
+            PendingIntent.getService(
+                applicationContext,
+                GNSS_FALLBACK_CHECK_REQUEST_CODE,
+                Intent(applicationContext, BackgroundService::class.java)
+                    .setAction(INTENT_ACTION_GNSS_FALLBACK_CHECK),
+                UPDATE_CURRENT_INTENT_FLAGS,
+            ),
             runThingsOnOtherThreads.getBackgroundLooper(),
         )
 
@@ -258,6 +275,7 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
     stopForeground(STOP_FOREGROUND_REMOVE)
     unregisterReceiver(powerBroadcastReceiver)
     significantMotionSensor.cancel()
+    gnssFallback.cancel()
     preferences.unregisterOnPreferenceChangedListener(this)
     messageProcessor.stopSendingMessages()
     super.onDestroy()
@@ -367,6 +385,10 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
             contactsRepo.clearAll()
             contactsClearedIdlingResource.setIdleState(true)
           }
+          return
+        }
+        INTENT_ACTION_GNSS_FALLBACK_CHECK -> {
+          gnssFallback.onCheck()
           return
         }
         INTENT_ACTION_CHANGE_MONITORING -> {
@@ -688,6 +710,7 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
           callbackForReportType[MessageLocation.ReportType.DEFAULT]!!.value,
           runThingsOnOtherThreads.getBackgroundLooper(),
       )
+      gnssFallback.setup(monitoring, priority, interval)
       return Result.success(Unit)
     } else {
       return Result.failure(Exception("Missing location permission"))
@@ -753,6 +776,7 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
             Preferences::notificationHigherPriority.name,
             Preferences::locatorPriority.name,
             Preferences::useGNSSInSignificantMonitoringMode.name,
+            Preferences::gnssFallbackAccuracy.name,
         )
     if (
         propertiesWeCareAbout
@@ -827,6 +851,9 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
         "org.owntracks.android.CLEAR_EVENT_NOTIFICATIONS"
     private const val INTENT_ACTION_CLEAR_CONTACTS = "org.owntracks.android.CLEAR_CONTACTS"
     const val INTENT_ACTION_CHANGE_MONITORING = "org.owntracks.android.CHANGE_MONITORING"
+    private const val INTENT_ACTION_GNSS_FALLBACK_CHECK =
+        "org.owntracks.android.GNSS_FALLBACK_CHECK"
+    private const val GNSS_FALLBACK_CHECK_REQUEST_CODE = 2
     private const val INTENT_ACTION_RESTART_AFTER_TASK_REMOVED =
         "org.owntracks.android.RESTART_AFTER_TASK_REMOVED"
     private const val INTENT_ACTION_BOOT_COMPLETED = "android.intent.action.BOOT_COMPLETED"

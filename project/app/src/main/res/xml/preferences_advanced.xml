@@ -16,6 +16,14 @@
         <org.owntracks.android.support.widgets.EditIntegerPreference
             android:digits="0123456789"
             android:inputType="number"
+            app:dialogMessage="@string/preferencesGnssFallbackAccuracyDialog"
+            app:iconSpaceReserved="false"
+            app:key="gnssFallbackAccuracy"
+            app:summary="@string/preferencesGnssFallbackAccuracySummary"
+            app:title="@string/preferencesGnssFallbackAccuracy" />
+        <org.owntracks.android.support.widgets.EditIntegerPreference
+            android:digits="0123456789"
+            android:inputType="number"
             app:dialogMessage="@string/preferencesLocatorDisplacementDialog"
             app:iconSpaceReserved="false"
             app:key="locatorDisplacement"

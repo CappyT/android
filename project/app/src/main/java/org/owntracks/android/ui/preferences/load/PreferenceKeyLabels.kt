@@ -23,6 +23,7 @@ val PREFERENCE_KEY_LABELS: Map<String, Int> =
         "experimentalFeatures" to R.string.preferencesExperimentalFeatures,
         "extendedData" to R.string.preferencesPubExtendedData,
         "fusedRegionDetection" to R.string.preferencesFusedRegionDetection,
+        "gnssFallbackAccuracy" to R.string.preferencesGnssFallbackAccuracy,
         "host" to R.string.preferencesHost,
         "ignoreInaccurateLocations" to R.string.preferencesIgnoreInaccurateLocations,
         "ignoreStaleLocations" to R.string.preferencesIgnoreStaleLocations,
