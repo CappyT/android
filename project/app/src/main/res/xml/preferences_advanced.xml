@@ -54,6 +54,11 @@
             app:key="useGNSSInSignificantMonitoringMode"
             app:summary="@string/preferencesUseGNSSInSignificantMonitoringModeSummary"
             app:title="@string/preferencesUseGNSSInSignificantMonitoringMode" />
+        <androidx.preference.SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:key="motionActivities"
+            app:summary="@string/preferencesMotionActivitiesSummary"
+            app:title="@string/preferencesMotionActivities" />
     </androidx.preference.PreferenceCategory>
     <androidx.preference.PreferenceCategory
         app:iconSpaceReserved="false"

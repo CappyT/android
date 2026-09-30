@@ -46,6 +46,7 @@ class GnssFallback(
     private val publishCallback: LocationCallback,
     private val checkIntent: PendingIntent,
     private val looper: Looper,
+    private val motionActivityTracker: MotionActivityTracker,
 ) {
   private val alarmManager by lazy {
     context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -135,12 +136,26 @@ class GnssFallback(
         }
       }
 
-  private val placeWatcher = PlaceWatcher(context, ::onMovementHint)
+  private val placeWatcher = PlaceWatcher(context, ::onRadioHint)
 
   private val wifiLinkWatcher =
       WifiLinkWatcher(context) { joined ->
-        onMovementHint(if (joined) "Wi-Fi joined" else "Wi-Fi lost")
+        onRadioHint(if (joined) "Wi-Fi joined" else "Wi-Fi lost")
       }
+
+  /**
+   * A radio change can happen without a move: a router restarts, or the modem switches between
+   * nearby cells. It only counts when the motion activity doesn't say the device is still.
+   */
+  private fun onRadioHint(reason: String) {
+    motionActivityTracker.withCurrentActivity { activity ->
+      if (activity == MotionActivityClassifier.Activity.STATIONARY) {
+        Timber.d("GNSS fallback: $reason, ignored while stationary")
+      } else {
+        onMovementHint(reason)
+      }
+    }
+  }
 
   /**
    * Starts or stops the fallback to match the main location request. It only runs in the modes that
@@ -214,7 +229,11 @@ class GnssFallback(
   /** Only fresh fixes describe where the device is now. */
   private fun recordPlace(location: Location) {
     val age = SystemClock.elapsedRealtimeNanos() - location.elapsedRealtimeNanos
-    if (location.accuracy <= policyAccuracy && age < PLACE_MAX_FIX_AGE.toNanos()) {
+    if (age >= PLACE_MAX_FIX_AGE.toNanos()) {
+      return
+    }
+    motionActivityTracker.onLocation(location)
+    if (location.accuracy <= policyAccuracy) {
       placeWatcher.onAccurateLocation(location.latitude, location.longitude)
     }
   }

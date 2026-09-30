@@ -37,6 +37,7 @@ val PREFERENCE_KEY_LABELS: Map<String, Int> =
         "maxImplausibleSpeedKmh" to R.string.preferencesMaxImplausibleSpeedKmh,
         "mode" to R.string.preferencesProfileId,
         "monitoring" to R.string.preferencesMonitoring,
+        "motionActivities" to R.string.preferencesMotionActivities,
         "moveModeLocatorInterval" to R.string.preferencesMoveModeLocatorInterval,
         "mqttProtocolLevel" to R.string.preferencesMqttProtocolLevel,
         "notificationEvents" to R.string.preferencesNotificationEvents,

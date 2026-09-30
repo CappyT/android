@@ -86,6 +86,7 @@ constructor(
     private val waypointsRepo: WaypointsRepo,
     private val deviceMetricsProvider: DeviceMetricsProvider,
     private val wifiInfoProvider: WifiInfoProvider,
+    private val motionActivityTracker: MotionActivityTracker,
     @param:ApplicationScope private val scope: CoroutineScope,
     @param:CoroutineScopes.IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     @param:Named("publishResponseMessageIdlingResource")
@@ -259,6 +260,9 @@ constructor(
               this.trigger = trigger
               trackerId = preferences.tid.toString()
               inregions = calculateInRegions(loadedWaypoints)
+              if (preferences.motionActivities) {
+                motionActivities = listOf(motionActivityTracker.currentActivity().value)
+              }
             }
     Timber.v("Actually publishing location $location triggered by $trigger as message=$message")
     messageProcessor.queueMessageForSending(message)
@@ -289,6 +293,7 @@ constructor(
    */
   suspend fun onLocationChanged(location: Location, reportType: MessageLocation.ReportType) {
     Timber.v("OnLocationChanged $location $reportType")
+    motionActivityTracker.onLocation(location)
     if (
         location.time > locationRepo.currentLocationTime ||
             reportType != MessageLocation.ReportType.DEFAULT

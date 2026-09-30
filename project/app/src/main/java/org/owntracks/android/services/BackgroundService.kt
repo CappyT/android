@@ -118,6 +118,8 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
 
   @Inject lateinit var requirementsChecker: RequirementsChecker
 
+  @Inject lateinit var motionActivityTracker: MotionActivityTracker
+
   @Inject
   @Named("contactsClearedIdlingResource")
   lateinit var contactsClearedIdlingResource: SimpleIdlingResource
@@ -208,7 +210,9 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
                 UPDATE_CURRENT_INTENT_FLAGS,
             ),
             runThingsOnOtherThreads.getBackgroundLooper(),
+            motionActivityTracker,
         )
+    motionActivityTracker.setEnabled(preferences.motionActivities)
 
     registerReceiver(
         powerBroadcastReceiver,
@@ -276,6 +280,7 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
     unregisterReceiver(powerBroadcastReceiver)
     significantMotionSensor.cancel()
     gnssFallback.cancel()
+    motionActivityTracker.setEnabled(false)
     preferences.unregisterOnPreferenceChangedListener(this)
     messageProcessor.stopSendingMessages()
     super.onDestroy()
@@ -787,6 +792,9 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
     ) {
       Timber.d("locator preferences changed. Resetting location request.")
       setupLocationRequest()
+    }
+    if (properties.contains(Preferences::motionActivities.name)) {
+      motionActivityTracker.setEnabled(preferences.motionActivities)
     }
     if (properties.contains("monitoring")) {
       setupLocationRequest()
