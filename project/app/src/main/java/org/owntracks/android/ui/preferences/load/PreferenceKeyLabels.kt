@@ -39,6 +39,7 @@ val PREFERENCE_KEY_LABELS: Map<String, Int> =
         "monitoring" to R.string.preferencesMonitoring,
         "motionActivities" to R.string.preferencesMotionActivities,
         "moveModeLocatorInterval" to R.string.preferencesMoveModeLocatorInterval,
+        "movingLocatorInterval" to R.string.preferencesMovingLocatorInterval,
         "mqttProtocolLevel" to R.string.preferencesMqttProtocolLevel,
         "notificationEvents" to R.string.preferencesNotificationEvents,
         "notificationGeocoderErrors" to R.string.preferencesNotificationGeocoderErrors,

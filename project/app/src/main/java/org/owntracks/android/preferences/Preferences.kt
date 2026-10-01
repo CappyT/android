@@ -290,6 +290,8 @@ constructor(
 
   @Preference var moveModeLocatorInterval: Int by preferencesStore
 
+  @Preference var movingLocatorInterval: Int by preferencesStore
+
   @Preference(exportModeHttp = false) var mqttProtocolLevel: MqttProtocolLevel by preferencesStore
 
   @Preference var notificationEvents: Boolean by preferencesStore

@@ -187,6 +187,9 @@
     <string name="preferencesMap">"Mapa"</string>
     <string name="preferencesMotionActivities">"Atividade de movimento"</string>
     <string name="preferencesMotionActivitiesSummary">"Detectar caminhada, corrida, condução ou imobilidade com o contador de passos e os sensores de movimento, e incluí-la nas mensagens de localização"</string>
+    <string name="preferencesMovingLocatorInterval">"Intervalo localização em movimento"</string>
+    <string name="preferencesMovingLocatorIntervalDialog">"Com que frequência pedir a localização enquanto o dispositivo se move no modo Alterações Significativas (segundos). Quando fica parado ou no mesmo lugar, volta a valer o intervalo de localização. 0 desativa."</string>
+    <string name="preferencesMovingLocatorIntervalSummary">"Intervalo entre atualizações de localização em movimento no modo Alterações Significativas"</string>
     <string name="preferencesMoveModeLocatorInterval">"Intervalo de localização (Modo de Movimento)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Quão regularmente deveriam as localizações serem requisitadas deste dispositivo enquanto está no modo Move"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Intervalo entre updates de localização no modo Move"</string>

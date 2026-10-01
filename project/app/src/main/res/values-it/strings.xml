@@ -196,6 +196,9 @@ Per permetterlo, abilita la geocolizzazione nelle impostazioni del dispositivo."
     <string name="preferencesMap">"Mappa"</string>
     <string name="preferencesMotionActivities">"Attività di movimento"</string>
     <string name="preferencesMotionActivitiesSummary">"Rileva camminata, corsa, guida o immobilità dal contapassi e dai sensori di movimento, e la include nei messaggi di posizione"</string>
+    <string name="preferencesMovingLocatorInterval">"Intervallo di posizionamento in movimento"</string>
+    <string name="preferencesMovingLocatorIntervalDialog">"Frequenza con cui chiedere la posizione mentre il dispositivo si muove in modalità Modifiche significative (secondi). Quando resta fermo o nello stesso posto, torna a valere l\'intervallo di posizionamento. 0 la disattiva."</string>
+    <string name="preferencesMovingLocatorIntervalSummary">"Intervallo tra aggiornamenti della posizione in movimento in modalità Modifiche significative"</string>
     <string name="preferencesMoveModeLocatorInterval">"Intervallo di posizionamento (Modalità movimento)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Frequenza per l'aggiornamento dal dispositivo in Modalità movimento (secondi)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Intervallo tra aggiornamenti della posizione in Modalità movimento"</string>

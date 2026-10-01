@@ -212,6 +212,9 @@
     <string name="preferencesMap">"Карта"</string>
     <string name="preferencesMotionActivities">"Двигательная активность"</string>
     <string name="preferencesMotionActivitiesSummary">"Определять ходьбу, бег, поездку или неподвижность по шагомеру и датчикам движения и добавлять это в сообщения о местоположении"</string>
+    <string name="preferencesMovingLocatorInterval">"Интервал определения местоположения в движении"</string>
+    <string name="preferencesMovingLocatorIntervalDialog">"Как часто запрашивать местоположение, пока устройство движется в режиме «Существенные перемещения» (секунды). Когда оно стоит или остаётся в одном месте, снова действует интервал определения местоположения. 0 отключает функцию."</string>
+    <string name="preferencesMovingLocatorIntervalSummary">"Интервал между обновлениями местоположения в движении в режиме «Существенные перемещения»"</string>
     <string name="preferencesMoveModeLocatorInterval">"Интервал определения местоположения (Режим отслеживания перемещений)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Как часто должно запрашиваться местоположение у устройства в режиме отслеживания перемещений (в секундах)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Интервал между обновлениями местоположения в режиме отслеживания перемещений"</string>

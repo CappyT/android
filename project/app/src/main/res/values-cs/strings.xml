@@ -191,6 +191,9 @@ Chcete-li to umožnit, zapněte polohu v nastavení zařízení."</string>
     <string name="preferencesMap">"Mapa"</string>
     <string name="preferencesMotionActivities">"Pohybová aktivita"</string>
     <string name="preferencesMotionActivitiesSummary">"Rozpoznat chůzi, běh, jízdu nebo stání pomocí krokoměru a pohybových senzorů a přidat je do zpráv o poloze"</string>
+    <string name="preferencesMovingLocatorInterval">"Interval polohy při pohybu"</string>
+    <string name="preferencesMovingLocatorIntervalDialog">"Jak často se má zjišťovat poloha, když se zařízení pohybuje v módu Změny (sekundy). Jakmile zůstane v klidu nebo na stejném místě, platí opět interval polohy. 0 funkci vypne."</string>
+    <string name="preferencesMovingLocatorIntervalSummary">"Interval mezi aktualizacemi polohy při pohybu v módu Změny"</string>
     <string name="preferencesMoveModeLocatorInterval">"Interval polohy (Mód pohybu)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Jak často se dotazovat zařízení na jeho polohu v Módu pohybu (ve vteřinách)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Interval aktualizace polohy v Módu pohybu"</string>

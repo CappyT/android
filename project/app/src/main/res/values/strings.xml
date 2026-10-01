@@ -238,6 +238,9 @@ To allow this, please enable Location in the device settings."</string>
     <string name="preferencesGnssFallbackAccuracySummary">"Fall back to GNSS when low-power locations are missing or inaccurate"</string>
     <string name="preferencesMotionActivities">"Motion activity"</string>
     <string name="preferencesMotionActivitiesSummary">"Detect walking, running, driving or standing still from the step counter and motion sensors, and include it in location messages"</string>
+    <string name="preferencesMovingLocatorInterval">"Location interval while moving"</string>
+    <string name="preferencesMovingLocatorIntervalDialog">"How often should locations be requested while the device is moving in Significant changes mode (seconds). Once it stands still or stays at the same place, the location interval applies again. 0 disables it."</string>
+    <string name="preferencesMovingLocatorIntervalSummary">"Interval between location updates while moving in Significant changes mode"</string>
     <string name="preferencesImportNoURIGiven">"No URI given for importing configuration"</string>
     <string name="preferencesKeepalive">"Keepalive"</string>
     <string name="preferencesKeepaliveDialogMessage">"How often should the client send a keepalive message to the broker (seconds)"</string>

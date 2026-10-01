@@ -170,6 +170,9 @@
     <string name="preferencesMap">"Mapa"</string>
     <string name="preferencesMotionActivities">"Actividad de movimiento"</string>
     <string name="preferencesMotionActivitiesSummary">"Detectar si caminas, corres, conduces o estás quieto con el podómetro y los sensores de movimiento, e incluirlo en los mensajes de ubicación"</string>
+    <string name="preferencesMovingLocatorInterval">"Intervalo de ubicación en movimiento"</string>
+    <string name="preferencesMovingLocatorIntervalDialog">"Con qué frecuencia se solicitan ubicaciones mientras el dispositivo se mueve en el modo Cambios significativos (segundos). Cuando se queda quieto o en el mismo lugar, vuelve a aplicarse el intervalo de ubicación. 0 lo desactiva."</string>
+    <string name="preferencesMovingLocatorIntervalSummary">"Intervalo entre actualizaciones de ubicación en movimiento en el modo Cambios significativos"</string>
     <string name="preferencesMoveModeLocatorInterval">"Intervalo de ubicación (modo Movimiento)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Cada cuánto tiempo se deben solicitar ubicaciones del dispositivo en modo Movimiento (segundos)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Intervalo entre actualizaciones de ubicación en modo Movimiento"</string>
