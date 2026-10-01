@@ -36,23 +36,37 @@ constructor(
       Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
   private val workManager = WorkManager.getInstance(context)
 
-  /** Used by the background service to periodically ping a location */
-  fun scheduleLocationPing() {
-    val pingWorkRequest: WorkRequest =
+  /**
+   * Used by the background service to periodically ping a location.
+   *
+   * The service calls this every time it starts, often twice in a row. A new periodic work runs its
+   * first period at once, so replacing it each time sent a ping right after every start and
+   * restarted the interval. [ExistingPeriodicWorkPolicy.KEEP] leaves a scheduled or running ping
+   * alone.
+   */
+  fun scheduleLocationPing() = enqueueLocationPing(ExistingPeriodicWorkPolicy.KEEP)
+
+  private fun enqueueLocationPing(policy: ExistingPeriodicWorkPolicy) {
+    val pingWorkRequest =
         PeriodicWorkRequest.Builder(
                 SendLocationPingWorker::class.java,
                 preferences.ping.toLong(),
                 TimeUnit.MINUTES,
             )
-            .addTag(PERIODIC_TASK_SEND_LOCATION_PING)
+            .addTag(PERIODIC_TASK_LOCATION_PING)
             .setConstraints(anyNetworkConstraint)
             .build()
     Timber.d(
-        "WorkManager queue task $PERIODIC_TASK_SEND_LOCATION_PING as ${pingWorkRequest.id} " +
+        "WorkManager queue task $PERIODIC_TASK_LOCATION_PING as ${pingWorkRequest.id} " +
             "with interval ${preferences.ping} minutes"
     )
-    workManager.cancelAllWorkByTag(PERIODIC_TASK_SEND_LOCATION_PING)
-    workManager.enqueue(pingWorkRequest)
+    // Older versions enqueued the ping without a unique name. It would run next to this one.
+    workManager.cancelAllWorkByTag(LEGACY_PERIODIC_TASK_SEND_LOCATION_PING)
+    workManager.enqueueUniquePeriodicWork(
+        PERIODIC_TASK_LOCATION_PING,
+        policy,
+        pingWorkRequest,
+    )
   }
 
   /** Cancels all WorkManager tasks. Called on app exit */
@@ -60,7 +74,8 @@ constructor(
     Timber.d("Cancelling task tag (all mqtt tasks) $ONETIME_TASK_MQTT_RECONNECT")
     workManager.cancelUniqueWork(ONETIME_TASK_MQTT_RECONNECT)
     workManager.cancelUniqueWork(PERIODIC_TASK_MQTT_CONNECTION_WATCHDOG)
-    workManager.cancelAllWorkByTag(PERIODIC_TASK_SEND_LOCATION_PING)
+    workManager.cancelUniqueWork(PERIODIC_TASK_LOCATION_PING)
+    workManager.cancelAllWorkByTag(LEGACY_PERIODIC_TASK_SEND_LOCATION_PING)
     resetMqttReconnectBackoff()
   }
 
@@ -144,7 +159,8 @@ constructor(
   }
 
   companion object {
-    private const val PERIODIC_TASK_SEND_LOCATION_PING = "PERIODIC_TASK_SEND_LOCATION_PING"
+    private const val PERIODIC_TASK_LOCATION_PING = "PERIODIC_TASK_LOCATION_PING"
+    private const val LEGACY_PERIODIC_TASK_SEND_LOCATION_PING = "PERIODIC_TASK_SEND_LOCATION_PING"
     private const val ONETIME_TASK_MQTT_RECONNECT = "ONETIME_TASK_MQTT_RECONNECT"
     private const val PERIODIC_TASK_MQTT_CONNECTION_WATCHDOG =
         "PERIODIC_TASK_MQTT_CONNECTION_WATCHDOG"
@@ -182,8 +198,8 @@ constructor(
 
   override fun onPreferenceChanged(properties: Set<String>) {
     if (properties.contains(Preferences::ping.name)) {
-      workManager.cancelAllWorkByTag(PERIODIC_TASK_SEND_LOCATION_PING)
-      scheduleLocationPing()
+      // Keeps the schedule and applies the new interval.
+      enqueueLocationPing(ExistingPeriodicWorkPolicy.UPDATE)
     }
   }
 }
