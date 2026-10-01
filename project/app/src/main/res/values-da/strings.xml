@@ -206,6 +206,13 @@ Slå venligst position til i enhedsindstillingerne for at løse dette."</string>
     <string name="preferencesMovingLocatorInterval">"Positionsinterval under bevægelse"</string>
     <string name="preferencesMovingLocatorIntervalDialog">"Hvor ofte der skal anmodes om positioner, mens enheden bevæger sig i tilstanden Betydelige ændringer (sekunder). Når den står stille eller bliver samme sted, gælder positionsintervallet igen. 0 slår det fra."</string>
     <string name="preferencesMovingLocatorIntervalSummary">"Interval mellem positionsopdateringer under bevægelse i tilstanden Betydelige ændringer"</string>
+    <string name="preferencesDawarichScanQr">"Scan Dawarich QR-kode"</string>
+    <string name="preferencesDawarichScanQrSummary">"Læs serveren og API-nøglen fra Konto, API-adgang i Dawarich"</string>
+    <string name="preferencesDawarichScanQrPrompt">"Peg kameraet mod QR-koden på siden API-adgang i Dawarich"</string>
+    <string name="preferencesDawarichScanQrInvalid">"Dette er ikke en QR-kode til Dawarich API-adgang"</string>
+    <string name="preferencesDawarichScanQrSaved">"Dawarich-server og API-nøgle gemt"</string>
+    <string name="preferencesDawarichUrl">"Dawarich server-URL"</string>
+    <string name="preferencesDawarichApiKey">"Dawarich API-nøgle"</string>
     <string name="preferencesMoveModeLocatorInterval">"Positionsinterval (Bevægelse tilstand)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Hvor ofte skal positioner anmodes fra enheden i Bevægelse tilstand (sekunder)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Interval mellem positionsopdateringer i Bevægelse tilstand"</string>

@@ -90,6 +90,30 @@
     </PreferenceCategory>
     <PreferenceCategory
         app:iconSpaceReserved="false"
+        app:key="preferenceGroupDawarich"
+        app:title="@string/preferencesCategoryDawarich">
+        <Preference
+            android:key="dawarichScanQr"
+            android:summary="@string/preferencesDawarichScanQrSummary"
+            android:title="@string/preferencesDawarichScanQr"
+            app:iconSpaceReserved="false" />
+        <ValidatingEditTextPreference
+            android:inputType="textUri|textNoSuggestions"
+            android:key="dawarichUrl"
+            android:lines="1"
+            android:title="@string/preferencesDawarichUrl"
+            app:iconSpaceReserved="false"
+            app:useSimpleSummaryProvider="true"
+            app:validationError="@string/preferencesUrlValidationError" />
+        <ValidatingEditTextPreference
+            android:inputType="textPassword"
+            android:key="dawarichApiKey"
+            android:title="@string/preferencesDawarichApiKey"
+            app:iconSpaceReserved="false"
+            app:useSimpleSummaryProvider="false" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
         app:key="preferenceGroupTLS"
         app:title="@string/tls">
         <SwitchPreferenceCompat

@@ -190,6 +190,13 @@
     <string name="preferencesMovingLocatorInterval">"Intervalo localização em movimento"</string>
     <string name="preferencesMovingLocatorIntervalDialog">"Com que frequência pedir a localização enquanto o dispositivo se move no modo Alterações Significativas (segundos). Quando fica parado ou no mesmo lugar, volta a valer o intervalo de localização. 0 desativa."</string>
     <string name="preferencesMovingLocatorIntervalSummary">"Intervalo entre atualizações de localização em movimento no modo Alterações Significativas"</string>
+    <string name="preferencesDawarichScanQr">"Ler código QR do Dawarich"</string>
+    <string name="preferencesDawarichScanQrSummary">"Lê o servidor e a chave API em Conta, Acesso API no Dawarich"</string>
+    <string name="preferencesDawarichScanQrPrompt">"Aponte a câmara para o código QR da página de acesso API do Dawarich"</string>
+    <string name="preferencesDawarichScanQrInvalid">"Este não é um código QR de acesso API do Dawarich"</string>
+    <string name="preferencesDawarichScanQrSaved">"Servidor e chave API do Dawarich guardados"</string>
+    <string name="preferencesDawarichUrl">"URL do servidor Dawarich"</string>
+    <string name="preferencesDawarichApiKey">"Chave API do Dawarich"</string>
     <string name="preferencesMoveModeLocatorInterval">"Intervalo de localização (Modo de Movimento)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Quão regularmente deveriam as localizações serem requisitadas deste dispositivo enquanto está no modo Move"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Intervalo entre updates de localização no modo Move"</string>

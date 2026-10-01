@@ -13,6 +13,8 @@ val PREFERENCE_KEY_LABELS: Map<String, Int> =
         "clientId" to R.string.preferencesClientId,
         "cmd" to R.string.preferencesRemoteCommand,
         "connectionTimeoutSeconds" to R.string.preferencesConnectionTimeoutSeconds,
+        "dawarichApiKey" to R.string.preferencesDawarichApiKey,
+        "dawarichUrl" to R.string.preferencesDawarichUrl,
         "debugLog" to R.string.preferencesDebugLog,
         "deviceId" to R.string.preferencesDeviceName,
         "discardNetworkLocationThresholdSeconds" to

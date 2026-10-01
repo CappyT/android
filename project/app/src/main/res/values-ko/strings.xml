@@ -180,6 +180,13 @@
     <string name="preferencesMovingLocatorInterval">"이동 중 위치 정보 업데이트 간격"</string>
     <string name="preferencesMovingLocatorIntervalDialog">"중요한 변경 사항 모드에서 기기가 이동하는 동안 위치를 요청하는 빈도(초). 정지하거나 같은 장소에 머물면 다시 위치 정보 업데이트 간격이 적용됩니다. 0이면 사용하지 않습니다."</string>
     <string name="preferencesMovingLocatorIntervalSummary">"중요한 변경 사항 모드에서 이동 중 위치 업데이트 간격"</string>
+    <string name="preferencesDawarichScanQr">"Dawarich QR 코드 스캔"</string>
+    <string name="preferencesDawarichScanQrSummary">"Dawarich의 계정, API 액세스에서 서버와 API 키를 읽어옵니다"</string>
+    <string name="preferencesDawarichScanQrPrompt">"Dawarich API 액세스 페이지의 QR 코드에 카메라를 맞추세요"</string>
+    <string name="preferencesDawarichScanQrInvalid">"Dawarich API 액세스 QR 코드가 아닙니다"</string>
+    <string name="preferencesDawarichScanQrSaved">"Dawarich 서버와 API 키를 저장했습니다"</string>
+    <string name="preferencesDawarichUrl">"Dawarich 서버 URL"</string>
+    <string name="preferencesDawarichApiKey">"Dawarich API 키"</string>
     <string name="preferencesMoveModeLocatorInterval">"위치 업데이트 간격 (이동 모드)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"이동 모드에서 기기에서 위치 정보를 요청하는 시간 간격 (초)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"이동 모드에서 위치 정보를 업데이트하는 시간 간격"</string>

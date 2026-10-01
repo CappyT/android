@@ -198,6 +198,13 @@
     <string name="preferencesMovingLocatorInterval">"מרווח מיקום בתנועה"</string>
     <string name="preferencesMovingLocatorIntervalDialog">"באיזו תדירות לבקש מיקום בזמן שהמכשיר נע במצב שינויים מהותיים (שניות). כשהוא עומד במקום או נשאר באותו מקום, חל שוב מרווח המיקום. 0 מבטל זאת."</string>
     <string name="preferencesMovingLocatorIntervalSummary">"מרווח בין עדכוני מיקום בתנועה במצב שינויים מהותיים"</string>
+    <string name="preferencesDawarichScanQr">"סריקת קוד QR של Dawarich"</string>
+    <string name="preferencesDawarichScanQrSummary">"קריאת השרת ומפתח ה-API מתוך חשבון, גישת API ב-Dawarich"</string>
+    <string name="preferencesDawarichScanQrPrompt">"יש לכוון את המצלמה לקוד ה-QR בדף גישת ה-API של Dawarich"</string>
+    <string name="preferencesDawarichScanQrInvalid">"זה לא קוד QR של גישת API של Dawarich"</string>
+    <string name="preferencesDawarichScanQrSaved">"השרת ומפתח ה-API של Dawarich נשמרו"</string>
+    <string name="preferencesDawarichUrl">"כתובת השרת של Dawarich"</string>
+    <string name="preferencesDawarichApiKey">"מפתח API של Dawarich"</string>
     <string name="preferencesMoveModeLocatorInterval">"מרווח מיקום (מצב תנועה)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"באיזו תדירות יש לבקש מיקומים מהמכשיר בזמן תנועה (שניות)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"מרווח בין עדכוני מיקום במצב תזוזה"</string>

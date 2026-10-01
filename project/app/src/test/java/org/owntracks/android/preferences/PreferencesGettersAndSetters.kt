@@ -93,6 +93,8 @@ class PreferencesGettersAndSetters(private val parameter: Parameter) {
                   false,
                   preferenceValueExpected = 1,
               ),
+              Parameter("dawarichApiKey", "testApiKey", String::class, false),
+              Parameter("dawarichUrl", "https://dawarich.example", String::class, false),
               Parameter("debugLog", true, Boolean::class, false),
               Parameter("deviceId", "deviceId", String::class, false),
               Parameter("dontReuseHttpClient", true, Boolean::class, true),

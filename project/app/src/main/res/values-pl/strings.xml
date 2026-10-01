@@ -192,6 +192,13 @@ Aby to umożliwić, włącz lokalizację w ustawieniach urządzenia."</string>
     <string name="preferencesMovingLocatorInterval">"Interwał pozycjonowania w ruchu"</string>
     <string name="preferencesMovingLocatorIntervalDialog">"Jak często pobierać lokalizację, gdy urządzenie porusza się w trybie Znaczące zmiany (sekundy). Gdy pozostaje w bezruchu lub w tym samym miejscu, znów obowiązuje interwał pozycjonowania. 0 wyłącza tę funkcję."</string>
     <string name="preferencesMovingLocatorIntervalSummary">"Interwał między aktualizacjami lokalizacji w ruchu w trybie Znaczące zmiany"</string>
+    <string name="preferencesDawarichScanQr">"Zeskanuj kod QR Dawarich"</string>
+    <string name="preferencesDawarichScanQrSummary">"Odczytuje serwer i klucz API ze strony Konto, Dostęp do API w Dawarich"</string>
+    <string name="preferencesDawarichScanQrPrompt">"Skieruj aparat na kod QR na stronie dostępu do API w Dawarich"</string>
+    <string name="preferencesDawarichScanQrInvalid">"To nie jest kod QR dostępu do API Dawarich"</string>
+    <string name="preferencesDawarichScanQrSaved">"Zapisano serwer i klucz API Dawarich"</string>
+    <string name="preferencesDawarichUrl">"URL serwera Dawarich"</string>
+    <string name="preferencesDawarichApiKey">"Klucz API Dawarich"</string>
     <string name="preferencesMoveModeLocatorInterval">"Interwał lokalizacji (tryb poruszania)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Jak często urządzenie ma zwracać lokalizację w trybie poruszania (sekundy)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Interwał aktualizacji pozycji w trybie poruszania"</string>

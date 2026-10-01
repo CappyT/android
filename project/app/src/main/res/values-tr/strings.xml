@@ -185,6 +185,13 @@ To allow this, please enable Location in the device settings."</string>
     <string name="preferencesMovingLocatorInterval">"Hareket halinde konum aralığı"</string>
     <string name="preferencesMovingLocatorIntervalDialog">"Cihaz Significant Changes modunda hareket ederken konumun ne sıklıkla isteneceği (saniye). Durduğunda veya aynı yerde kaldığında yeniden konum aralığı geçerli olur. 0 devre dışı bırakır."</string>
     <string name="preferencesMovingLocatorIntervalSummary">"Significant Changes modunda hareket halindeyken konum güncellemeleri arasındaki süre"</string>
+    <string name="preferencesDawarichScanQr">"Dawarich QR kodunu tara"</string>
+    <string name="preferencesDawarichScanQrSummary">"Sunucuyu ve API anahtarını Dawarich\'te Hesap, API erişimi sayfasından okur"</string>
+    <string name="preferencesDawarichScanQrPrompt">"Kamerayı Dawarich API erişimi sayfasındaki QR koduna tutun"</string>
+    <string name="preferencesDawarichScanQrInvalid">"Bu bir Dawarich API erişimi QR kodu değil"</string>
+    <string name="preferencesDawarichScanQrSaved">"Dawarich sunucusu ve API anahtarı kaydedildi"</string>
+    <string name="preferencesDawarichUrl">"Dawarich sunucu URL\'si"</string>
+    <string name="preferencesDawarichApiKey">"Dawarich API anahtarı"</string>
     <string name="preferencesMoveModeLocatorInterval">"Location interval (Move mode)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"How often should locations be requested from the device whilst in Move mode (seconds)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Interval between location updates in Move mode"</string>
