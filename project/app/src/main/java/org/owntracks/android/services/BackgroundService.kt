@@ -214,7 +214,7 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
         ) {
           locationRepo.currentPublishedLocation.value
         }
-    motionActivityTracker.setEnabled(preferences.motionActivities)
+    updateMotionActivityTracking()
 
     registerReceiver(
         powerBroadcastReceiver,
@@ -657,6 +657,13 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
     }
   }
 
+  /** The GNSS fallback needs the motion activity to tell when a moving device stops. */
+  private fun updateMotionActivityTracking() {
+    motionActivityTracker.setEnabled(
+        preferences.motionActivities || gnssFallback.usesMotionActivity
+    )
+  }
+
   private fun setupLocationRequest(): Result<Unit> {
     Timber.v("setupLocationRequest")
     if (requirementsChecker.hasLocationPermissions()) {
@@ -718,6 +725,7 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
           runThingsOnOtherThreads.getBackgroundLooper(),
       )
       gnssFallback.setup(monitoring, priority, interval)
+      updateMotionActivityTracking()
       return Result.success(Unit)
     } else {
       return Result.failure(Exception("Missing location permission"))
@@ -784,6 +792,8 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
             Preferences::locatorPriority.name,
             Preferences::useGNSSInSignificantMonitoringMode.name,
             Preferences::gnssFallbackAccuracy.name,
+            Preferences::movingLocatorInterval.name,
+            Preferences::ignoreInaccurateLocations.name,
         )
     if (
         propertiesWeCareAbout
@@ -796,7 +806,7 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
       setupLocationRequest()
     }
     if (properties.contains(Preferences::motionActivities.name)) {
-      motionActivityTracker.setEnabled(preferences.motionActivities)
+      updateMotionActivityTracking()
     }
     if (properties.contains("monitoring")) {
       setupLocationRequest()
