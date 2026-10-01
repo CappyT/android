@@ -79,11 +79,7 @@ class GnssFallback(
           }
           val action =
               synchronized(this@GnssFallback) {
-                policy?.onLocation(
-                    location.accuracy,
-                    location.elapsedRealtimeNanos / 1_000_000,
-                    SystemClock.elapsedRealtime(),
-                )
+                policy?.onLocation(location.toFix(), SystemClock.elapsedRealtime())
               }
           when (action) {
             GnssFallbackPolicy.Action.PUBLISH -> {
@@ -110,6 +106,11 @@ class GnssFallback(
               Timber.d("GNSS fallback: location accuracy ${location.accuracy}m is too low")
               requestGnssFix()
             }
+            GnssFallbackPolicy.Action.START_MOTION_WINDOW -> {
+              Timber.d("GNSS fallback: location away from the place, looking for a location")
+              startMotionWindow()
+              return
+            }
             else -> {}
           }
           if (action != null && action != GnssFallbackPolicy.Action.NONE) {
@@ -130,7 +131,10 @@ class GnssFallback(
         override fun onLocationResult(locationResult: LocationResult) {
           lastGnssFixElapsedRealtimeNanos = locationResult.lastLocation.elapsedRealtimeNanos
           synchronized(this@GnssFallback) {
-            policy?.onGnssFix(locationResult.lastLocation.elapsedRealtimeNanos / 1_000_000)
+            policy?.onGnssFix(
+                locationResult.lastLocation.toFix(),
+                SystemClock.elapsedRealtime(),
+            )
           }
           recordPlace(locationResult.lastLocation)
           publishCallback.onLocationResult(locationResult)
@@ -149,7 +153,7 @@ class GnssFallback(
       object : TriggerEventListener() {
         override fun onTrigger(event: TriggerEvent?) {
           armMotionSensor()
-          onMovementHint("motion detected")
+          onMovementHint("motion detected", displacement = false)
         }
       }
 
@@ -169,7 +173,7 @@ class GnssFallback(
       if (activity == MotionActivityClassifier.Activity.STATIONARY) {
         Timber.d("GNSS fallback: $reason, ignored while stationary")
       } else {
-        onMovementHint(reason)
+        onMovementHint(reason, displacement = true)
       }
     }
   }
@@ -193,7 +197,7 @@ class GnssFallback(
     // The location request is often set up several times in a row. Keeping the policy keeps its
     // rate limit, so each setup doesn't start another GNSS fix.
     if (policy == null || accuracy != policyAccuracy || interval.toMillis() != intervalMillis) {
-      policy = GnssFallbackPolicy(accuracy, interval.toMillis(), motionSensor != null)
+      policy = GnssFallbackPolicy(accuracy, interval.toMillis(), 0, motionSensor != null)
       policyAccuracy = accuracy
       intervalMillis = interval.toMillis()
     }
@@ -226,12 +230,13 @@ class GnssFallback(
     scheduleNextCheck()
   }
 
-  private fun onMovementHint(reason: String) {
+  private fun onMovementHint(reason: String, displacement: Boolean) {
     val now = SystemClock.elapsedRealtime()
-    val (windowStarted, pendingAt) =
-        synchronized(this) { policy?.let { it.onMotion(now) to it.pendingMotionWindowAt } }
-            ?: return
-    if (!windowStarted) {
+    val (action, pendingAt) =
+        synchronized(this) {
+          policy?.let { it.onMovementHint(now, displacement) to it.pendingMotionWindowAt }
+        } ?: return
+    if (action != GnssFallbackPolicy.Action.START_MOTION_WINDOW) {
       Timber.d("GNSS fallback: $reason, held back, window in ${pendingAt?.minus(now)}ms")
       // The check that runs first opens the window, so only bring it forward.
       if (pendingAt != null && pendingAt < checkAt) {
@@ -320,6 +325,9 @@ class GnssFallback(
       locationProviderClient.singleHighAccuracyLocation(gnssCallback, looper)
     }
   }
+
+  private fun Location.toFix() =
+      GnssFallbackPolicy.Fix(latitude, longitude, accuracy, elapsedRealtimeNanos / 1_000_000)
 
   companion object {
     private val MOTION_PROBE_INTERVAL: Duration = Duration.ofSeconds(20)
