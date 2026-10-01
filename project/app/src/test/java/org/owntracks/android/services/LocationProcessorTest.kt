@@ -2,8 +2,12 @@ package org.owntracks.android.services
 
 import android.content.Context
 import android.location.Location
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -111,6 +115,7 @@ class LocationProcessorTest {
   private fun TestScope.buildLocationProcessor(
       messageProcessor: MessageProcessor,
       discardThresholdSeconds: Int,
+      ioDispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
   ): LocationProcessor {
     val preferences =
         mock<Preferences> {
@@ -130,11 +135,36 @@ class LocationProcessorTest {
         mock<WifiInfoProvider>(),
         mock<MotionActivityTracker>(),
         this,
-        Dispatchers.Unconfined,
+        ioDispatcher,
         SimpleIdlingResource("publishResponseMessageIdlingResource", false),
         SimpleIdlingResource("mockLocationIdlingResource", false),
         false,
     )
+  }
+
+  /**
+   * Registering a location request hands back the last location of each provider at once, and the
+   * service handles each one in its own coroutine. Publishing suspends, so the duplicate check must
+   * not let them all through before the first one is recorded.
+   */
+  @Test
+  fun `locations handled at the same time are published once`() = runTest {
+    val messageProcessor = mock<MessageProcessor>()
+    val locationProcessor =
+        buildLocationProcessor(messageProcessor, 0, StandardTestDispatcher(testScheduler))
+    val location =
+        mock<Location> {
+          on { time } doReturn 1_000_000L
+          on { provider } doReturn "network"
+          on { accuracy } doReturn 8f
+        }
+
+    repeat(3) {
+      launch { locationProcessor.onLocationChanged(location, MessageLocation.ReportType.DEFAULT) }
+    }
+    advanceUntilIdle()
+
+    verify(messageProcessor, times(1)).queueMessageForSending(any())
   }
 
   /**

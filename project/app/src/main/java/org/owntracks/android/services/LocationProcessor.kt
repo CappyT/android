@@ -12,6 +12,8 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.owntracks.android.data.repos.LocationRepo
 import org.owntracks.android.data.waypoints.WaypointModel
@@ -291,7 +293,18 @@ constructor(
    * @param location received from the device
    * @param reportType type of report that
    */
-  suspend fun onLocationChanged(location: Location, reportType: MessageLocation.ReportType) {
+  suspend fun onLocationChanged(location: Location, reportType: MessageLocation.ReportType) =
+      // Publishing suspends, and each location arrives in its own coroutine. Without the lock,
+      // every
+      // location passes the checks against the last published one before any of them is recorded.
+      locationChangeMutex.withLock { handleLocationChange(location, reportType) }
+
+  private val locationChangeMutex = Mutex()
+
+  private suspend fun handleLocationChange(
+      location: Location,
+      reportType: MessageLocation.ReportType,
+  ) {
     Timber.v("OnLocationChanged $location $reportType")
     motionActivityTracker.onLocation(location)
     if (
