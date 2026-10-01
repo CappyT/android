@@ -215,6 +215,13 @@
     <string name="preferencesMovingLocatorInterval">"Интервал определения местоположения в движении"</string>
     <string name="preferencesMovingLocatorIntervalDialog">"Как часто запрашивать местоположение, пока устройство движется в режиме «Существенные перемещения» (секунды). Когда оно стоит или остаётся в одном месте, снова действует интервал определения местоположения. 0 отключает функцию."</string>
     <string name="preferencesMovingLocatorIntervalSummary">"Интервал между обновлениями местоположения в движении в режиме «Существенные перемещения»"</string>
+    <string name="preferencesDawarichScanQr">"Сканировать QR-код Dawarich"</string>
+    <string name="preferencesDawarichScanQrSummary">"Считывает сервер и ключ API со страницы «Аккаунт, доступ к API» в Dawarich"</string>
+    <string name="preferencesDawarichScanQrPrompt">"Наведите камеру на QR-код на странице доступа к API в Dawarich"</string>
+    <string name="preferencesDawarichScanQrInvalid">"Это не QR-код доступа к API Dawarich"</string>
+    <string name="preferencesDawarichScanQrSaved">"Сервер и ключ API Dawarich сохранены"</string>
+    <string name="preferencesDawarichUrl">"URL сервера Dawarich"</string>
+    <string name="preferencesDawarichApiKey">"Ключ API Dawarich"</string>
     <string name="preferencesMoveModeLocatorInterval">"Интервал определения местоположения (Режим отслеживания перемещений)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Как часто должно запрашиваться местоположение у устройства в режиме отслеживания перемещений (в секундах)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Интервал между обновлениями местоположения в режиме отслеживания перемещений"</string>

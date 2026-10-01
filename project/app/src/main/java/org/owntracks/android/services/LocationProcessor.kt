@@ -30,6 +30,7 @@ import org.owntracks.android.model.messages.MessageWaypoint
 import org.owntracks.android.model.messages.MessageWaypoints
 import org.owntracks.android.model.messages.addWifi
 import org.owntracks.android.net.WifiInfoProvider
+import org.owntracks.android.net.dawarich.DawarichUploader
 import org.owntracks.android.preferences.Preferences
 import org.owntracks.android.preferences.types.MonitoringMode
 import org.owntracks.android.support.DeviceMetricsProvider
@@ -89,6 +90,7 @@ constructor(
     private val deviceMetricsProvider: DeviceMetricsProvider,
     private val wifiInfoProvider: WifiInfoProvider,
     private val motionActivityTracker: MotionActivityTracker,
+    private val dawarichUploader: DawarichUploader,
     @param:ApplicationScope private val scope: CoroutineScope,
     @param:CoroutineScopes.IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     @param:Named("publishResponseMessageIdlingResource")
@@ -268,6 +270,7 @@ constructor(
             }
     Timber.v("Actually publishing location $location triggered by $trigger as message=$message")
     messageProcessor.queueMessageForSending(message)
+    dawarichUploader.enqueue(message)
     if (responseMessageTypes.contains(trigger)) {
       publishResponseMessageIdlingResource.setIdleState(true)
     }

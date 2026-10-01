@@ -229,6 +229,10 @@ constructor(
 
   @Preference var connectionTimeoutSeconds: Int by preferencesStore
 
+  @Preference var dawarichApiKey: String by preferencesStore
+
+  @Preference var dawarichUrl: String by preferencesStore
+
   @Preference var debugLog: Boolean by preferencesStore
 
   @Preference var deviceId: String by preferencesStore

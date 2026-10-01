@@ -24,6 +24,7 @@ import org.owntracks.android.data.waypoints.InMemoryWaypointsRepo
 import org.owntracks.android.model.messages.MessageBase
 import org.owntracks.android.model.messages.MessageLocation
 import org.owntracks.android.net.WifiInfoProvider
+import org.owntracks.android.net.dawarich.DawarichUploader
 import org.owntracks.android.preferences.Preferences
 import org.owntracks.android.preferences.types.MonitoringMode
 import org.owntracks.android.preferences.types.StringMaxTwoAlphaNumericChars
@@ -78,6 +79,7 @@ class LocationProcessorTest {
             mock<DeviceMetricsProvider>(),
             mock<WifiInfoProvider>(),
             mock<MotionActivityTracker>(),
+            mock<DawarichUploader>(),
             this,
             Dispatchers.Unconfined,
             SimpleIdlingResource("publishResponseMessageIdlingResource", false),
@@ -134,6 +136,7 @@ class LocationProcessorTest {
         mock<DeviceMetricsProvider>(),
         mock<WifiInfoProvider>(),
         mock<MotionActivityTracker>(),
+        mock<DawarichUploader>(),
         this,
         ioDispatcher,
         SimpleIdlingResource("publishResponseMessageIdlingResource", false),

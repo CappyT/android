@@ -263,6 +263,11 @@
             android:screenOrientation="unspecified"
             android:theme="@style/Theme.Owntracks.Welcome" />
 
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="portrait"
+            tools:replace="screenOrientation" />
+
         <provider
             android:name=".ui.status.logs.ExportedLogContentProvider"
             android:authorities="${applicationId}.log"

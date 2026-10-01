@@ -21,6 +21,8 @@ interface DefaultsProvider {
               .replace("\\W".toRegex(), "")
               .lowercase(Locale.getDefault())
       Preferences::connectionTimeoutSeconds -> 30
+      Preferences::dawarichApiKey -> ""
+      Preferences::dawarichUrl -> ""
       Preferences::debugLog -> false
       Preferences::deviceId ->
           Build.DEVICE?.replace(" ", "-")

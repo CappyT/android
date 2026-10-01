@@ -173,6 +173,13 @@
     <string name="preferencesMovingLocatorInterval">"Asukoha tuvastamise välp liikumisel"</string>
     <string name="preferencesMovingLocatorIntervalDialog">"Kui tihti asukohta küsitakse, kui seade liigub režiimis Olulised muudatused (sekundites). Kui seade jääb paigale või samasse kohta, kehtib taas asukoha tuvastamise välp. 0 lülitab selle välja."</string>
     <string name="preferencesMovingLocatorIntervalSummary">"Asukoha uuenduste vaheline aeg liikumisel režiimis Olulised muudatused"</string>
+    <string name="preferencesDawarichScanQr">"Skanni Dawarichi QR-kood"</string>
+    <string name="preferencesDawarichScanQrSummary">"Loe server ja API-võti Dawarichi lehelt Konto, API-juurdepääs"</string>
+    <string name="preferencesDawarichScanQrPrompt">"Suuna kaamera Dawarichi API-juurdepääsu lehe QR-koodile"</string>
+    <string name="preferencesDawarichScanQrInvalid">"See ei ole Dawarichi API-juurdepääsu QR-kood"</string>
+    <string name="preferencesDawarichScanQrSaved">"Dawarichi server ja API-võti salvestatud"</string>
+    <string name="preferencesDawarichUrl">"Dawarichi serveri URL"</string>
+    <string name="preferencesDawarichApiKey">"Dawarichi API-võti"</string>
     <string name="preferencesNotification">"Teavitused"</string>
     <string name="preferencesNotificationEvents">"Sündmused"</string>
     <string name="preferencesNotificationEventsSummary">"Teavita sündmuste sõnumitest"</string>

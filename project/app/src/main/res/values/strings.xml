@@ -241,6 +241,14 @@ To allow this, please enable Location in the device settings."</string>
     <string name="preferencesMovingLocatorInterval">"Location interval while moving"</string>
     <string name="preferencesMovingLocatorIntervalDialog">"How often should locations be requested while the device is moving in Significant changes mode (seconds). Once it stands still or stays at the same place, the location interval applies again. 0 disables it."</string>
     <string name="preferencesMovingLocatorIntervalSummary">"Interval between location updates while moving in Significant changes mode"</string>
+    <string name="preferencesCategoryDawarich" translatable="false">"Dawarich"</string>
+    <string name="preferencesDawarichScanQr">"Scan Dawarich QR code"</string>
+    <string name="preferencesDawarichScanQrSummary">"Read the server and API key from Account, API access in Dawarich"</string>
+    <string name="preferencesDawarichScanQrPrompt">"Point the camera at the QR code on the API access page of Dawarich"</string>
+    <string name="preferencesDawarichScanQrInvalid">"This is not a Dawarich API access QR code"</string>
+    <string name="preferencesDawarichScanQrSaved">"Dawarich server and API key saved"</string>
+    <string name="preferencesDawarichUrl">"Dawarich server URL"</string>
+    <string name="preferencesDawarichApiKey">"Dawarich API key"</string>
     <string name="preferencesImportNoURIGiven">"No URI given for importing configuration"</string>
     <string name="preferencesKeepalive">"Keepalive"</string>
     <string name="preferencesKeepaliveDialogMessage">"How often should the client send a keepalive message to the broker (seconds)"</string>

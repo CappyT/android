@@ -7,10 +7,13 @@ import android.os.Bundle
 import android.provider.Settings.ACTION_SECURITY_SETTINGS
 import android.security.KeyChain
 import android.security.KeyChain.EXTRA_NAME
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.ValidatingEditTextPreference
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlin.reflect.KProperty
@@ -20,6 +23,7 @@ import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.owntracks.android.R
 import org.owntracks.android.di.CoroutineScopes
+import org.owntracks.android.net.dawarich.Dawarich
 import org.owntracks.android.preferences.Preferences
 import org.owntracks.android.preferences.types.ConnectionMode
 import org.owntracks.android.services.MessageProcessor
@@ -43,10 +47,36 @@ class ConnectionFragment : AbstractPreferenceFragment(), Preferences.OnPreferenc
     menuProvider = PreferencesMenuProvider(this, messageProcessor)
   }
 
-  private val booleanSummaryProperties = setOf(Preferences::password)
+  private val booleanSummaryProperties = setOf(Preferences::password, Preferences::dawarichApiKey)
 
   private val certificateInstallerLauncher =
       registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {}
+
+  private val dawarichQrLauncher =
+      registerForActivityResult(ScanContract()) { result ->
+        val contents = result.contents ?: return@registerForActivityResult
+        val connection = Dawarich.parseQrCode(contents)
+        if (connection == null) {
+          Toast.makeText(
+                  requireContext(),
+                  R.string.preferencesDawarichScanQrInvalid,
+                  Toast.LENGTH_LONG,
+              )
+              .show()
+          return@registerForActivityResult
+        }
+        // Setting the text goes through the preference data store and refreshes the summary.
+        findPreference<ValidatingEditTextPreference>(Preferences::dawarichUrl.name)?.text =
+            connection.serverUrl
+        findPreference<ValidatingEditTextPreference>(Preferences::dawarichApiKey.name)?.text =
+            connection.apiKey
+        Toast.makeText(
+                requireContext(),
+                R.string.preferencesDawarichScanQrSaved,
+                Toast.LENGTH_SHORT,
+            )
+            .show()
+      }
 
   override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
     super.onCreatePreferences(savedInstanceState, rootKey)
@@ -59,6 +89,10 @@ class ConnectionFragment : AbstractPreferenceFragment(), Preferences.OnPreferenc
     // Set the validators on the preferences that need them
     mapOf(
             Preferences::url.name to { input: String -> input.toHttpUrlOrNull() != null },
+            Preferences::dawarichUrl.name to
+                { input: String ->
+                  input.isBlank() || input.toHttpUrlOrNull() != null
+                },
             Preferences::port.name to
                 { port ->
                   port.isNotBlank() &&
@@ -118,6 +152,17 @@ class ConnectionFragment : AbstractPreferenceFragment(), Preferences.OnPreferenc
         )
         true
       }
+    }
+
+    findPreference<Preference>("dawarichScanQr")?.setOnPreferenceClickListener {
+      dawarichQrLauncher.launch(
+          ScanOptions()
+              .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+              .setPrompt(getString(R.string.preferencesDawarichScanQrPrompt))
+              .setBeepEnabled(false)
+              .setOrientationLocked(false)
+      )
+      true
     }
 
     findPreference<Preference>("tlsCAInstall")?.apply {
