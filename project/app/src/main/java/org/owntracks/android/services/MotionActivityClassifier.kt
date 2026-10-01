@@ -1,11 +1,5 @@
 package org.owntracks.android.services
 
-import kotlin.math.asin
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.sin
-import kotlin.math.sqrt
-
 /**
  * Guesses what the user is doing from the step counter, the significant motion sensor and the speed
  * between locations. The names match the `motionactivities` that the iOS app publishes.
@@ -58,7 +52,7 @@ class MotionActivityClassifier {
     if (speed != null) {
       lastSpeed = at to speed
     } else if (previous != null) {
-      val distance = distance(previous, latitude, longitude)
+      val distance = distanceMeters(previous.latitude, previous.longitude, latitude, longitude)
       // Two fixes whose accuracy circles overlap can't tell a move from noise.
       if (distance > previous.accuracy + accuracy && at - previous.at >= MIN_SPEED_SPAN_MILLIS) {
         lastSpeed = at to (distance / ((at - previous.at) / 1000.0)).toFloat()
@@ -110,19 +104,7 @@ class MotionActivityClassifier {
     return (recent.last().total - recent.first().total) * 60_000.0 / span
   }
 
-  private fun distance(from: Fix, latitude: Double, longitude: Double): Double {
-    val dLat = Math.toRadians(latitude - from.latitude)
-    val dLon = Math.toRadians(longitude - from.longitude)
-    val a =
-        sin(dLat / 2).pow(2) +
-            cos(Math.toRadians(from.latitude)) *
-                cos(Math.toRadians(latitude)) *
-                sin(dLon / 2).pow(2)
-    return 2 * EARTH_RADIUS_METERS * asin(sqrt(a))
-  }
-
   companion object {
-    private const val EARTH_RADIUS_METERS = 6_371_000.0
     private const val STEP_WINDOW_MILLIS = 120_000L
     private const val STILL_AFTER_MILLIS = 300_000L
     private const val SPEED_MAX_AGE_MILLIS = 180_000L
