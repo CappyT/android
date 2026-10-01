@@ -11,9 +11,9 @@ package org.owntracks.android.services
  * moving interval and each accurate location is offered for publishing, at most one per moving
  * interval. The device goes back to the still state, where everything runs every [intervalMillis],
  * when the motion activity says it is stationary, or when its accurate locations stay at the same
- * place for a while. The second case means the motion sensors move without the device going
- * anywhere, like on a treadmill, so only a proof of displacement switches back to moving: a radio
- * hint, or a location away from the place.
+ * place for at least three moving intervals. The second case means the motion sensors move without
+ * the device going anywhere, like on a treadmill, so only a proof of displacement switches back to
+ * moving: a radio hint, or a location away from the place.
  *
  * Without a moving interval, a movement hint only opens a window, at most one per interval. A hint
  * that the rate limit holds back opens its window when the limit expires, unless an accurate
@@ -21,13 +21,13 @@ package org.owntracks.android.services
  *
  * In the still state, a location whose accuracy circle overlaps the last accurate place doesn't
  * request GNSS: nothing says the device left. An inaccurate location away from the place starts a
- * motion window, unless the motion activity says the device is stationary. With [motionAware], a
- * missing location only counts as a gap after a motion. Android throttles the low-power providers
- * while the device stays still.
+ * motion window. While the motion activity says the device is stationary, it has to be far beyond
+ * both accuracy circles to count. With [motionAware], a missing location only counts as a gap after
+ * a motion. Android throttles the low-power providers while the device stays still.
  *
  * GNSS requests are rate limited to one per interval of the current state. A request that gets no
- * fix within [GNSS_TIMEOUT_MILLIS] failed, and after two failures in a row the limit grows from one
- * to four intervals, until an accurate location arrives.
+ * accurate fix within [GNSS_TIMEOUT_MILLIS] failed, and after two failures in a row the limit grows
+ * from one to four intervals, until an accurate location arrives.
  *
  * All times are in the [android.os.SystemClock.elapsedRealtime] timebase.
  */
@@ -87,6 +87,10 @@ class GnssFallbackPolicy(
 
   private val movingEnabled = movingIntervalMillis > 0
 
+  // Android delivers a location up to a tenth of the interval early, and a probe location can come
+  // just before the limit. Without slack, every other one would be skipped.
+  private val movingSlackMillis = movingIntervalMillis * 3 / 4
+
   /**
    * @param displacement true when the hint comes from the radios, which change when the device
    *   changes place. The motion sensors also fire when the device moves in place.
@@ -132,8 +136,9 @@ class GnssFallbackPolicy(
       if (lastPlace != null && isSamePlace(lastPlace, fix)) {
         return Action.NONE
       }
-      // A cell location can be far off. While the motion activity says still, it proves nothing.
-      if (lastPlace != null && stationary) {
+      // A cell location can be far off. While the motion activity says still, only a location far
+      // beyond both accuracy circles proves a move, like a smooth train ride.
+      if (lastPlace != null && stationary && !isFarFrom(lastPlace, fix)) {
         return Action.NONE
       }
       if (lastPlace != null && movingEnabled) {
@@ -165,7 +170,7 @@ class GnssFallbackPolicy(
       if (trackSamePlace(fix)) {
         return Action.NONE
       }
-      if (lastPublishAt.let { it == null || now - it >= movingIntervalMillis }) {
+      if (lastPublishAt.let { it == null || now - it >= movingSlackMillis }) {
         lastPublishAt = now
         return Action.PUBLISH
       }
@@ -190,17 +195,23 @@ class GnssFallbackPolicy(
     return Action.NONE
   }
 
-  /** A GNSS fix locates the device as well as an accurate low-power location. */
+  /**
+   * An accurate GNSS fix locates the device as well as an accurate low-power location. An
+   * inaccurate one, like a weak fix indoors, counts as a failure.
+   */
   fun onGnssFix(fix: Fix, now: Long) {
     gnssPendingSince = null
+    if (fix.accuracy > accuracyMeters) {
+      gnssFailures++
+      return
+    }
     gnssFailures = 0
     if (lastAccurate.let { it == null || fix.fixedAt > it.fixedAt }) {
       lastAccurate = fix
     }
-    if (fix.accuracy > accuracyMeters) {
-      return
-    }
     if (moving) {
+      // The caller publishes every GNSS fix.
+      lastPublishAt = now
       trackSamePlace(fix)
       return
     }
@@ -276,7 +287,7 @@ class GnssFallbackPolicy(
    * long enough to switch to the still state.
    */
   private fun trackSamePlace(fix: Fix): Boolean {
-    if (!moving || fix.accuracy > SAME_PLACE_MAX_ACCURACY) {
+    if (!moving) {
       return false
     }
     val last = samePlaceLast
@@ -284,11 +295,7 @@ class GnssFallbackPolicy(
       return false
     }
     val start = samePlaceStart
-    if (
-        start == null ||
-            distanceMeters(start.latitude, start.longitude, fix.latitude, fix.longitude) >
-                SAME_PLACE_RADIUS_METERS
-    ) {
+    if (start == null || !isSamePlaceWhileMoving(start, fix)) {
       samePlaceStart = fix
       samePlaceLast = fix
       samePlaceCount = 1
@@ -310,18 +317,41 @@ class GnssFallbackPolicy(
     return false
   }
 
+  /**
+   * Precise locations must stay within [SAME_PLACE_RADIUS_METERS], so a walk keeps moving. Less
+   * precise ones can't tell a walk from noise, and only their accuracy circles must overlap: GNSS
+   * indoors gives such fixes, and moving would request one every interval.
+   */
+  private fun isSamePlaceWhileMoving(start: Fix, fix: Fix): Boolean =
+      if (
+          start.accuracy <= SAME_PLACE_PRECISE_ACCURACY &&
+              fix.accuracy <= SAME_PLACE_PRECISE_ACCURACY
+      ) {
+        distanceMeters(start.latitude, start.longitude, fix.latitude, fix.longitude) <=
+            SAME_PLACE_RADIUS_METERS
+      } else {
+        isSamePlace(start, fix)
+      }
+
   private fun resetSamePlace() {
     samePlaceStart = null
     samePlaceLast = null
     samePlaceCount = 0
   }
 
-  /** An accurate location since the window started, or within the last moving interval. */
+  /**
+   * An accurate location since the window started, or within half a moving interval. A whole
+   * interval would skip every other GNSS fix when only GNSS gives accurate locations.
+   */
   private fun hasRecentAccurateLocation(now: Long): Boolean {
     val at = lastAccurate?.fixedAt ?: return false
-    val since = if (inMotionWindow) motionWindowStartedAt else now - movingIntervalMillis
+    val since = if (inMotionWindow) motionWindowStartedAt else now - movingIntervalMillis / 2
     return at >= since
   }
+
+  private fun isFarFrom(a: Fix, b: Fix) =
+      distanceMeters(a.latitude, a.longitude, b.latitude, b.longitude) >
+          FAR_ACCURACY_FACTOR * (a.accuracy + b.accuracy)
 
   private fun isSamePlace(a: Fix, b: Fix) =
       isSamePlace(
@@ -351,7 +381,7 @@ class GnssFallbackPolicy(
   }
 
   private fun gnssLimitMillis(): Long {
-    val base = currentIntervalMillis()
+    val base = if (moving) movingSlackMillis else intervalMillis
     if (gnssFailures < GNSS_FAILURES_BEFORE_BACKOFF) {
       return base
     }
@@ -362,7 +392,7 @@ class GnssFallbackPolicy(
   companion object {
     private const val SAME_PLACE_MIN_METERS = 100f
     private const val SAME_PLACE_RADIUS_METERS = 100.0
-    private const val SAME_PLACE_MAX_ACCURACY = 100f
+    private const val SAME_PLACE_PRECISE_ACCURACY = 100f
     private const val SAME_PLACE_MIN_FIXES = 4
     private const val SAME_PLACE_MIN_INTERVALS = 3
     // Android's getCurrentLocation gives up after 30 seconds.
@@ -370,6 +400,7 @@ class GnssFallbackPolicy(
     private const val GNSS_FAILURES_BEFORE_BACKOFF = 2
     // One, two, then four intervals.
     private const val GNSS_MAX_BACKOFF_SHIFT = 2
+    private const val FAR_ACCURACY_FACTOR = 3
 
     /**
      * True when two locations can't be told apart: their accuracy circles overlap, or they are
