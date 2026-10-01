@@ -182,6 +182,9 @@ To allow this, please enable Location in the device settings."</string>
     <string name="preferencesMap">"Harita"</string>
     <string name="preferencesMotionActivities">"Hareket etkinliği"</string>
     <string name="preferencesMotionActivitiesSummary">"Adım sayar ve hareket sensörleriyle yürüme, koşma, sürüş veya hareketsizliği algıla ve konum mesajlarına ekle"</string>
+    <string name="preferencesMovingLocatorInterval">"Hareket halinde konum aralığı"</string>
+    <string name="preferencesMovingLocatorIntervalDialog">"Cihaz Significant Changes modunda hareket ederken konumun ne sıklıkla isteneceği (saniye). Durduğunda veya aynı yerde kaldığında yeniden konum aralığı geçerli olur. 0 devre dışı bırakır."</string>
+    <string name="preferencesMovingLocatorIntervalSummary">"Significant Changes modunda hareket halindeyken konum güncellemeleri arasındaki süre"</string>
     <string name="preferencesMoveModeLocatorInterval">"Location interval (Move mode)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"How often should locations be requested from the device whilst in Move mode (seconds)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Interval between location updates in Move mode"</string>

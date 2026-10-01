@@ -203,6 +203,9 @@ Slå venligst position til i enhedsindstillingerne for at løse dette."</string>
     <string name="preferencesMap">"Kort"</string>
     <string name="preferencesMotionActivities">"Bevægelsesaktivitet"</string>
     <string name="preferencesMotionActivitiesSummary">"Registrér gang, løb, kørsel eller stilstand med skridttælleren og bevægelsessensorerne, og medtag det i positionsbeskeder"</string>
+    <string name="preferencesMovingLocatorInterval">"Positionsinterval under bevægelse"</string>
+    <string name="preferencesMovingLocatorIntervalDialog">"Hvor ofte der skal anmodes om positioner, mens enheden bevæger sig i tilstanden Betydelige ændringer (sekunder). Når den står stille eller bliver samme sted, gælder positionsintervallet igen. 0 slår det fra."</string>
+    <string name="preferencesMovingLocatorIntervalSummary">"Interval mellem positionsopdateringer under bevægelse i tilstanden Betydelige ændringer"</string>
     <string name="preferencesMoveModeLocatorInterval">"Positionsinterval (Bevægelse tilstand)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Hvor ofte skal positioner anmodes fra enheden i Bevægelse tilstand (sekunder)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Interval mellem positionsopdateringer i Bevægelse tilstand"</string>

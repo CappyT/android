@@ -44,6 +44,14 @@
             app:key="moveModeLocatorInterval"
             app:summary="@string/preferencesMoveModeLocatorIntervalSummary"
             app:title="@string/preferencesMoveModeLocatorInterval" />
+        <org.owntracks.android.support.widgets.EditIntegerPreference
+            android:digits="0123456789"
+            android:inputType="number"
+            app:dialogMessage="@string/preferencesMovingLocatorIntervalDialog"
+            app:iconSpaceReserved="false"
+            app:key="movingLocatorInterval"
+            app:summary="@string/preferencesMovingLocatorIntervalSummary"
+            app:title="@string/preferencesMovingLocatorInterval" />
         <androidx.preference.SwitchPreferenceCompat
             app:iconSpaceReserved="false"
             app:key="pegLocatorFastestIntervalToInterval"

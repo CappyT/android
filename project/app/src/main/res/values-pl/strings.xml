@@ -189,6 +189,9 @@ Aby to umożliwić, włącz lokalizację w ustawieniach urządzenia."</string>
     <string name="preferencesMap">"Mapa"</string>
     <string name="preferencesMotionActivities">"Aktywność ruchowa"</string>
     <string name="preferencesMotionActivitiesSummary">"Rozpoznawaj chodzenie, bieganie, jazdę lub bezruch za pomocą krokomierza i czujników ruchu i dołączaj je do wiadomości o lokalizacji"</string>
+    <string name="preferencesMovingLocatorInterval">"Interwał pozycjonowania w ruchu"</string>
+    <string name="preferencesMovingLocatorIntervalDialog">"Jak często pobierać lokalizację, gdy urządzenie porusza się w trybie Znaczące zmiany (sekundy). Gdy pozostaje w bezruchu lub w tym samym miejscu, znów obowiązuje interwał pozycjonowania. 0 wyłącza tę funkcję."</string>
+    <string name="preferencesMovingLocatorIntervalSummary">"Interwał między aktualizacjami lokalizacji w ruchu w trybie Znaczące zmiany"</string>
     <string name="preferencesMoveModeLocatorInterval">"Interwał lokalizacji (tryb poruszania)"</string>
     <string name="preferencesMoveModeLocatorIntervalDialog">"Jak często urządzenie ma zwracać lokalizację w trybie poruszania (sekundy)"</string>
     <string name="preferencesMoveModeLocatorIntervalSummary">"Interwał aktualizacji pozycji w trybie poruszania"</string>

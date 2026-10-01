@@ -51,6 +51,7 @@ interface DefaultsProvider {
       Preferences::monitoring -> MonitoringMode.Significant
       Preferences::motionActivities -> false
       Preferences::moveModeLocatorInterval -> 10
+      Preferences::movingLocatorInterval -> 60
       Preferences::mqttProtocolLevel -> MqttProtocolLevel.MQTT_3_1
       Preferences::notificationEvents -> true
       Preferences::notificationGeocoderErrors -> true
