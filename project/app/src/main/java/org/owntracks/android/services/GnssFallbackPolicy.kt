@@ -11,9 +11,19 @@ package org.owntracks.android.services
  * moving interval and each accurate location is offered for publishing, at most one per moving
  * interval. The device goes back to the still state, where everything runs every [intervalMillis],
  * when the motion activity says it is stationary, or when its accurate locations stay at the same
- * place for at least three moving intervals. The second case means the motion sensors move without
- * the device going anywhere, like on a treadmill, so only a proof of displacement switches back to
- * moving: a radio hint, or a location away from the place.
+ * place: two of them most of a moving interval apart, or four over three moving intervals while the
+ * device counts steps, because a walk covers little ground between two locations.
+ *
+ * The motion sensors also fire when the device moves in place, like on a treadmill. After the
+ * locations stayed at the same place, a motion only starts a look: the moving state without GNSS at
+ * the end of its window. Looks that find the same place again are spaced out, up to one per
+ * interval. Until a radio hint or a location away from the place it started at proves a
+ * displacement, a missing or inaccurate location requests GNSS as slowly as in the still state.
+ *
+ * While moving away from the place, an accurate GNSS fix shows that only GNSS locates the device,
+ * so [wantsGnssTracking] asks for a periodic GNSS request instead of one fix per check. It ends
+ * with the moving state, with an accurate location from another source, or without a fix in time. A
+ * Wi-Fi network joined while moving opens a window: the network locates the device without GNSS.
  *
  * Without a moving interval, a movement hint only opens a window, at most one per interval. A hint
  * that the rate limit holds back opens its window when the limit expires, unless an accurate
@@ -26,8 +36,9 @@ package org.owntracks.android.services
  * a motion. Android throttles the low-power providers while the device stays still.
  *
  * GNSS requests are rate limited to one per interval of the current state. A request that gets no
- * accurate fix within [GNSS_TIMEOUT_MILLIS] failed, and after two failures in a row the limit grows
- * from one to four intervals, until an accurate location arrives.
+ * accurate fix within [GNSS_TIMEOUT_MILLIS] failed: the sky is probably hidden. The next request
+ * then waits one interval, growing to four with more failures, until a GNSS fix or an accurate
+ * location at another place. A radio hint allows one request sooner.
  *
  * All times are in the [android.os.SystemClock.elapsedRealtime] timebase.
  */
@@ -44,12 +55,16 @@ class GnssFallbackPolicy(
     START_MOTION_WINDOW,
   }
 
-  /** @param fixedAt when the location was fixed. A provider can hand back a cached location. */
+  /**
+   * @param fixedAt when the location was fixed. A provider can hand back a cached location.
+   * @param fromGnss true when the GNSS provider made the location, whoever asked for it.
+   */
   data class Fix(
       val latitude: Double,
       val longitude: Double,
       val accuracy: Float,
       val fixedAt: Long,
+      val fromGnss: Boolean = false,
   )
 
   // One interval for the next location, plus half an interval of slack for batching.
@@ -68,6 +83,14 @@ class GnssFallbackPolicy(
   private var samePlaceLast: Fix? = null
   private var samePlaceCount = 0
   private var stationary = false
+  private var lastPreciseAt: Long? = null
+  private var origin: Fix? = null
+  private var displaced = false
+  private var walking = false
+  private var looking = false
+  private var looks = 0
+  private var gnssTracking = false
+  private var gnssRetryGranted = false
 
   /** True between a movement hint and the first accurate location or check that follows it. */
   var inMotionWindow = false
@@ -80,6 +103,10 @@ class GnssFallbackPolicy(
   /** True when the device went still because its locations stayed at the same place. */
   var stillAtSamePlace = false
     private set
+
+  /** True while a periodic GNSS request should replace the single fixes. */
+  val wantsGnssTracking: Boolean
+    get() = moving && gnssTracking
 
   /** When the check must run to open the window of a motion that the rate limit held back. */
   val pendingMotionWindowAt: Long?
@@ -94,17 +121,32 @@ class GnssFallbackPolicy(
   /**
    * @param displacement true when the hint comes from the radios, which change when the device
    *   changes place. The motion sensors also fire when the device moves in place.
+   * @param wifiJoined true when the device joined a Wi-Fi network.
    * @return [Action.START_MOTION_WINDOW] when the caller should look for a location now.
    */
-  fun onMovementHint(now: Long, displacement: Boolean): Action {
-    if (stillAtSamePlace && !displacement) {
+  fun onMovementHint(now: Long, displacement: Boolean, wifiJoined: Boolean = false): Action {
+    if (displacement && gnssFailures > 0) {
+      gnssRetryGranted = true
+    }
+    val look = stillAtSamePlace && !displacement
+    if (look && lastMotionWindowAt.let { it != null && now - it < lookBackoffMillis() }) {
       return Action.NONE
     }
     lastMotionAt = now
     stationary = false
     if (moving) {
       // A new cell or network while moving means the device is not at the same place.
-      if (displacement) resetSamePlace()
+      if (displacement) {
+        resetSamePlace()
+        markDisplaced()
+      }
+      if (wifiJoined && !inMotionWindow) {
+        // The low-power providers can be quiet on arrival. Without a window, the next check
+        // would request GNSS, often indoors.
+        motionWindowStartedAt = now
+        inMotionWindow = true
+        return Action.START_MOTION_WINDOW
+      }
       return Action.NONE
     }
     val lastWindow = lastMotionWindowAt
@@ -112,20 +154,32 @@ class GnssFallbackPolicy(
       motionPending = true
       return Action.NONE
     }
-    startMotionWindow(now)
+    startMotionWindow(now, displacement)
+    looking = look
     return Action.START_MOTION_WINDOW
   }
 
   fun onLocation(fix: Fix, now: Long): Action {
     settleGnssRequest(now)
     if (fix.accuracy <= accuracyMeters) {
-      if (lastAccurate.let { it == null || fix.fixedAt > it.fixedAt }) {
+      val previous = lastAccurate
+      if (previous == null || fix.fixedAt > previous.fixedAt) {
         lastAccurate = fix
       }
       if (now - fix.fixedAt > currentIntervalMillis()) {
         return Action.NONE
       }
-      gnssFailures = 0
+      // At the same place, the sky is as hidden as when the GNSS request failed.
+      if (previous == null || !isSamePlace(previous, fix)) {
+        gnssFailures = 0
+      }
+      if (!fix.fromGnss) {
+        gnssTracking = false
+      }
+      noteDisplacement(fix)
+      if (fix.accuracy <= SAME_PLACE_PRECISE_ACCURACY) {
+        lastPreciseAt = fix.fixedAt
+      }
       return onFreshAccurateLocation(fix, now)
     }
     if (now - fix.fixedAt > currentIntervalMillis()) {
@@ -142,11 +196,17 @@ class GnssFallbackPolicy(
         return Action.NONE
       }
       if (lastPlace != null && movingEnabled) {
-        startMotionWindow(now)
+        startMotionWindow(now, displaced = true)
         return Action.START_MOTION_WINDOW
       }
     }
-    if (moving && hasRecentAccurateLocation(now)) {
+    if (moving && !displaced && (looking || !inMotionWindow)) {
+      if (origin?.let { isSamePlace(it, fix) } == true) {
+        return Action.NONE
+      }
+      markDisplaced()
+    }
+    if (wantsGnssTracking || (moving && hasRecentAccurateLocation(now))) {
       return Action.NONE
     }
     if (requestIfDue(now)) {
@@ -170,6 +230,16 @@ class GnssFallbackPolicy(
       if (trackSamePlace(fix)) {
         return Action.NONE
       }
+      val lastPrecise = lastPreciseAt
+      if (
+          fix.accuracy > SAME_PLACE_PRECISE_ACCURACY &&
+              lastPrecise != null &&
+              now - lastPrecise <= movingIntervalMillis * 3 / 2
+      ) {
+        // Precise locations keep coming, like with a navigation app. A coarse one in between
+        // would take their turn.
+        return Action.NONE
+      }
       if (lastPublishAt.let { it == null || now - it >= movingSlackMillis }) {
         lastPublishAt = now
         return Action.PUBLISH
@@ -183,7 +253,7 @@ class GnssFallbackPolicy(
     }
     val lastPlace = place
     if (movingEnabled && lastPlace != null && !isSamePlace(lastPlace, fix)) {
-      startMoving()
+      startMoving(displaced = true)
       place = fix
       trackSamePlace(fix)
       lastPublishAt = now
@@ -203,6 +273,7 @@ class GnssFallbackPolicy(
     gnssPendingSince = null
     if (fix.accuracy > accuracyMeters) {
       gnssFailures++
+      gnssTracking = false
       return
     }
     gnssFailures = 0
@@ -210,27 +281,38 @@ class GnssFallbackPolicy(
       lastAccurate = fix
     }
     if (moving) {
-      // The caller publishes every GNSS fix.
+      noteDisplacement(fix)
+      if (fix.accuracy <= SAME_PLACE_PRECISE_ACCURACY) {
+        lastPreciseAt = fix.fixedAt
+      }
+      // The caller publishes the GNSS fixes.
       lastPublishAt = now
+      gnssTracking = displaced
       trackSamePlace(fix)
       return
     }
     val lastPlace = place
     if (movingEnabled && lastPlace != null && !isSamePlace(lastPlace, fix)) {
-      startMoving()
+      startMoving(displaced = true)
       trackSamePlace(fix)
       lastPublishAt = now
     }
     place = fix
   }
 
-  /** Feeds the motion activity. A stationary device ends the moving state. */
-  fun onActivity(stationary: Boolean) {
+  /**
+   * Feeds the motion activity. A stationary device ends the moving state.
+   *
+   * @param walking true while the device counts steps, on a walk or a run.
+   */
+  fun onActivity(stationary: Boolean, walking: Boolean = false) {
     this.stationary = stationary
+    this.walking = walking
     if (!stationary) {
       return
     }
     stillAtSamePlace = false
+    looks = 0
     if (moving && !inMotionWindow) {
       moving = false
       resetSamePlace()
@@ -243,16 +325,34 @@ class GnssFallbackPolicy(
     settleGnssRequest(now)
     if (inMotionWindow) {
       inMotionWindow = false
-      return gnssIfDue(now)
+      if (looking) {
+        return Action.NONE
+      }
+      // A window opened while tracking with GNSS leaves the fixes to the periodic request.
+      if (!wantsGnssTracking) {
+        return gnssIfDue(now)
+      }
     }
     val lastAccurateAt = lastAccurate?.fixedAt
     if (moving) {
-      val stale = lastAccurateAt == null || now - lastAccurateAt > movingIntervalMillis * 3 / 2
+      if (gnssTracking) {
+        val fixDue = movingIntervalMillis * 3 / 2 + GNSS_TIMEOUT_MILLIS
+        if (lastAccurateAt != null && now - lastAccurateAt <= fixDue) {
+          return Action.NONE
+        }
+        // The periodic request found no fix in time, like a single request that fails.
+        gnssTracking = false
+        gnssFailures++
+        lastGnssRequestAt = now
+        return Action.NONE
+      }
+      val staleAfter = if (displaced) movingIntervalMillis * 3 / 2 else staleAfterMillis
+      val stale = lastAccurateAt == null || now - lastAccurateAt > staleAfter
       return if (stale) gnssIfDue(now) else Action.NONE
     }
     val pendingAt = pendingMotionWindowAt
     if (pendingAt != null && now >= pendingAt) {
-      startMotionWindow(now)
+      startMotionWindow(now, displaced = false)
       return Action.START_MOTION_WINDOW
     }
     if (lastAccurateAt == null) {
@@ -266,21 +366,50 @@ class GnssFallbackPolicy(
   /** How often the probe and the check run outside a motion window. */
   fun currentIntervalMillis(): Long = if (moving) movingIntervalMillis else intervalMillis
 
-  private fun startMotionWindow(now: Long) {
+  private fun startMotionWindow(now: Long, displaced: Boolean) {
     lastMotionWindowAt = now
     motionWindowStartedAt = now
     motionPending = false
     inMotionWindow = true
     if (movingEnabled) {
-      startMoving()
+      startMoving(displaced)
     }
   }
 
-  private fun startMoving() {
+  /** @param displaced false when only the motion sensors say the device moves. */
+  private fun startMoving(displaced: Boolean) {
     moving = true
     stillAtSamePlace = false
+    looking = false
+    gnssTracking = false
+    origin = place
+    // Without a known place, nothing can show that the device stayed.
+    this.displaced = false
+    if (displaced || place == null) {
+      markDisplaced()
+    }
     resetSamePlace()
   }
+
+  private fun markDisplaced() {
+    displaced = true
+    looking = false
+    looks = 0
+  }
+
+  private fun noteDisplacement(fix: Fix) {
+    if (moving && origin?.let { isSamePlace(it, fix) } == false) {
+      markDisplaced()
+    }
+  }
+
+  /** How long after the last window a motion at the same place starts the next look. */
+  private fun lookBackoffMillis(): Long =
+      when {
+        looks <= 1 -> movingIntervalMillis
+        looks == 2 -> movingIntervalMillis * 2
+        else -> intervalMillis
+      }
 
   /**
    * Counts accurate locations at the same place while moving. Returns true when they stayed there
@@ -303,14 +432,24 @@ class GnssFallbackPolicy(
     }
     samePlaceLast = fix
     samePlaceCount++
-    if (
-        samePlaceCount >= SAME_PLACE_MIN_FIXES &&
-            fix.fixedAt - start.fixedAt >= movingIntervalMillis * SAME_PLACE_MIN_INTERVALS
-    ) {
+    val span = fix.fixedAt - start.fixedAt
+    // A walk covers less than the same place radius between two locations.
+    val stayed =
+        if (walking) {
+          samePlaceCount >= SAME_PLACE_MIN_FIXES &&
+              span >= movingIntervalMillis * SAME_PLACE_MIN_INTERVALS
+        } else {
+          span >= movingSlackMillis
+        }
+    if (stayed) {
       moving = false
       inMotionWindow = false
       stillAtSamePlace = true
-      place = fix
+      if (!displaced) {
+        looks++
+      }
+      // The first location, so a slow move away from it adds up over the next looks.
+      place = start
       resetSamePlace()
       return true
     }
@@ -377,15 +516,16 @@ class GnssFallbackPolicy(
     }
     lastGnssRequestAt = now
     gnssPendingSince = now
+    gnssRetryGranted = false
     return true
   }
 
   private fun gnssLimitMillis(): Long {
-    val base = if (moving) movingSlackMillis else intervalMillis
-    if (gnssFailures < GNSS_FAILURES_BEFORE_BACKOFF) {
+    val base = if (moving && displaced) movingSlackMillis else intervalMillis
+    if (gnssFailures == 0 || gnssRetryGranted) {
       return base
     }
-    val shift = (gnssFailures - GNSS_FAILURES_BEFORE_BACKOFF).coerceAtMost(GNSS_MAX_BACKOFF_SHIFT)
+    val shift = (gnssFailures - 1).coerceAtMost(GNSS_MAX_BACKOFF_SHIFT)
     return maxOf(base, intervalMillis shl shift)
   }
 
@@ -397,7 +537,6 @@ class GnssFallbackPolicy(
     private const val SAME_PLACE_MIN_INTERVALS = 3
     // Android's getCurrentLocation gives up after 30 seconds.
     const val GNSS_TIMEOUT_MILLIS = 40_000L
-    private const val GNSS_FAILURES_BEFORE_BACKOFF = 2
     // One, two, then four intervals.
     private const val GNSS_MAX_BACKOFF_SHIFT = 2
     private const val FAR_ACCURACY_FACTOR = 3

@@ -721,7 +721,7 @@ class BackgroundService : LifecycleService(), Preferences.OnPreferenceChangeList
       locationProviderClient.flushLocations()
       locationProviderClient.requestLocationUpdates(
           request,
-          callbackForReportType[MessageLocation.ReportType.DEFAULT]!!.value,
+          gnssFallback.mainCallback,
           runThingsOnOtherThreads.getBackgroundLooper(),
       )
       gnssFallback.setup(monitoring, priority, interval)
