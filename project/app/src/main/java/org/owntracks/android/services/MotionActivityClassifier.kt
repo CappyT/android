@@ -28,6 +28,7 @@ class MotionActivityClassifier {
   private var lastMotionAt: Long? = null
   private var lastFix: Fix? = null
   private var lastSpeed: Pair<Long, Float>? = null
+  private var lastAutomotiveAt: Long? = null
 
   fun onSteps(at: Long, total: Long) {
     if (steps.lastOrNull()?.let { at <= it.at } == true) {
@@ -49,18 +50,31 @@ class MotionActivityClassifier {
     if (previous != null && at <= previous.at) {
       return
     }
-    if (speed != null) {
-      lastSpeed = at to speed
-    } else if (previous != null) {
-      val distance = distanceMeters(previous.latitude, previous.longitude, latitude, longitude)
-      // Two fixes whose accuracy circles overlap can't tell a move from noise.
-      if (distance > previous.accuracy + accuracy && at - previous.at >= MIN_SPEED_SPAN_MILLIS) {
-        lastSpeed = at to (distance / ((at - previous.at) / 1000.0)).toFloat()
+    val current = speed ?: previous?.let { speedFrom(it, at, latitude, longitude, accuracy) }
+    if (current != null) {
+      lastSpeed = at to current
+      if (current >= AUTOMOTIVE_SPEED) {
+        lastAutomotiveAt = at
       }
     }
     if (accuracy <= MAX_FIX_ACCURACY) {
       lastFix = Fix(at, latitude, longitude, accuracy)
     }
+  }
+
+  private fun speedFrom(
+      previous: Fix,
+      at: Long,
+      latitude: Double,
+      longitude: Double,
+      accuracy: Float,
+  ): Float? {
+    val distance = distanceMeters(previous.latitude, previous.longitude, latitude, longitude)
+    // Two fixes whose accuracy circles overlap can't tell a move from noise.
+    if (distance <= previous.accuracy + accuracy || at - previous.at < MIN_SPEED_SPAN_MILLIS) {
+      return null
+    }
+    return (distance / ((at - previous.at) / 1000.0)).toFloat()
   }
 
   /**
@@ -74,10 +88,11 @@ class MotionActivityClassifier {
     if (hasStepCounter && recentSteps >= MIN_WALKING_STEPS) {
       return if (cadence(now) >= RUNNING_CADENCE) Activity.RUNNING else Activity.WALKING
     }
-    val speed = lastSpeed?.takeIf { now - it.first <= SPEED_MAX_AGE_MILLIS }?.second
-    if (speed != null && speed >= AUTOMOTIVE_SPEED) {
+    // A car slows down and stops in traffic, so one automotive speed holds for a while.
+    if (lastAutomotiveAt?.let { now - it <= SPEED_MAX_AGE_MILLIS } == true) {
       return Activity.AUTOMOTIVE
     }
+    val speed = lastSpeed?.takeIf { now - it.first <= SPEED_MAX_AGE_MILLIS }?.second
     val motion = lastMotionAt
     val still =
         hasMotionSensor &&
