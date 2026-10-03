@@ -87,6 +87,16 @@ class MotionActivityClassifierTest {
   }
 
   @Test
+  fun `An automotive speed holds through a slow stretch`() {
+    val classifier = MotionActivityClassifier()
+    classifier.onMotion(start)
+    classifier.onLocation(start, 45.60, 9.97, 10f, 15f)
+    classifier.onLocation(start + minute, 45.61, 9.97, 10f, 1f)
+    assertEquals(Activity.AUTOMOTIVE, classifier.classify(start + 2 * minute))
+    assertEquals(Activity.UNKNOWN, classifier.classify(start + 4 * minute))
+  }
+
+  @Test
   fun `The speed between two distant fixes is automotive`() {
     val classifier = MotionActivityClassifier()
     classifier.onMotion(start)
