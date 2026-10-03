@@ -9,6 +9,7 @@ import android.hardware.SensorManager
 import android.hardware.TriggerEvent
 import android.hardware.TriggerEventListener
 import android.location.Location
+import android.location.LocationManager
 import android.os.Looper
 import android.os.SystemClock
 import androidx.core.app.AlarmManagerCompat
@@ -41,7 +42,9 @@ import timber.log.Timber
  * In Significant mode with [Preferences.movingLocatorInterval], the window starts the moving state:
  * the probe and the check run every moving interval until [GnssFallbackPolicy] says the device is
  * still again. The motion activity decides that, so the fallback keeps [MotionActivityTracker]
- * running while it can be moving.
+ * running while it can be moving. Where only GNSS locates the moving device, a GNSS request at the
+ * moving interval replaces the single fixes: the alarm of the check is inexact and fires too late
+ * for one fix per interval.
  */
 class GnssFallback(
     private val context: Context,
@@ -71,6 +74,7 @@ class GnssFallback(
   private var priority = LocatorPriority.LowPower
   private var appliedState: State? = null
   private var wasMoving = false
+  private var gnssTracking = false
   private var ignoredMotionCellCheckAt = 0L
   private var checkAt = 0L
 
@@ -101,17 +105,8 @@ class GnssFallback(
               }
           when (action) {
             GnssFallbackPolicy.Action.PUBLISH -> {
-              val published = lastPublishedLocation()
-              val distance = published?.let { location.distanceTo(it) }
-              if (
-                  published != null &&
-                      distance != null &&
-                      GnssFallbackPolicy.isSamePlace(
-                          distance,
-                          location.accuracy,
-                          published.accuracy,
-                      )
-              ) {
+              val distance = samePlaceDistance(location)
+              if (distance != null) {
                 Timber.d("GNSS fallback: location is ${distance}m away, same place")
               } else {
                 Timber.d("GNSS fallback: publishing a fresh accurate location")
@@ -137,18 +132,58 @@ class GnssFallback(
         override fun onLocationAvailability(locationAvailability: LocationAvailability) {}
       }
 
+  /**
+   * The callback for the main location request. While moving, its locations go through the policy
+   * like the ones of the probe, so both together publish at most one per moving interval.
+   */
+  val mainCallback =
+      object : LocationCallback {
+        override fun onLocationResult(locationResult: LocationResult) {
+          if (synchronized(this@GnssFallback) { policy?.moving == true }) {
+            probeCallback.onLocationResult(locationResult)
+            return
+          }
+          // The displacement filter compares with the last location that this request delivered.
+          // After a move, that one is far behind the last published location.
+          val distance =
+              if (usesMotionActivity) samePlaceDistance(locationResult.lastLocation) else null
+          if (distance != null) {
+            Timber.d("GNSS fallback: main location is ${distance}m away, same place")
+          } else {
+            publishCallback.onLocationResult(locationResult)
+          }
+        }
+
+        override fun onLocationError() {
+          publishCallback.onLocationError()
+        }
+
+        override fun onLocationAvailability(locationAvailability: LocationAvailability) {
+          publishCallback.onLocationAvailability(locationAvailability)
+        }
+      }
+
   private val gnssCallback =
       object : LocationCallback {
         override fun onLocationResult(locationResult: LocationResult) {
-          lastGnssFixElapsedRealtimeNanos = locationResult.lastLocation.elapsedRealtimeNanos
-          synchronized(this@GnssFallback) {
-            policy?.onGnssFix(
-                locationResult.lastLocation.toFix(),
-                SystemClock.elapsedRealtime(),
-            )
+          val location = locationResult.lastLocation
+          lastGnssFixElapsedRealtimeNanos = location.elapsedRealtimeNanos
+          val moving =
+              synchronized(this@GnssFallback) {
+                policy?.let {
+                  val moving = it.moving
+                  it.onGnssFix(location.toFix(), SystemClock.elapsedRealtime())
+                  moving
+                }
+              } ?: false
+          recordPlace(location)
+          // While moving, the fixes keep coming after the device stops.
+          val distance = if (moving) samePlaceDistance(location) else null
+          if (distance != null) {
+            Timber.d("GNSS fallback: GNSS fix is ${distance}m away, same place")
+          } else {
+            publishCallback.onLocationResult(locationResult)
           }
-          recordPlace(locationResult.lastLocation)
-          publishCallback.onLocationResult(locationResult)
           applyState()
         }
 
@@ -173,19 +208,19 @@ class GnssFallback(
 
   private val wifiLinkWatcher =
       WifiLinkWatcher(context) { joined ->
-        onRadioHint(if (joined) "Wi-Fi joined" else "Wi-Fi lost")
+        onRadioHint(if (joined) "Wi-Fi joined" else "Wi-Fi lost", wifiJoined = joined)
       }
 
   /**
    * A radio change can happen without a move: a router restarts, or the modem switches between
    * nearby cells. It only counts when the motion activity doesn't say the device is still.
    */
-  private fun onRadioHint(reason: String) {
+  private fun onRadioHint(reason: String, wifiJoined: Boolean = false) {
     motionActivityTracker.withCurrentActivity { activity ->
       if (activity == MotionActivityClassifier.Activity.STATIONARY) {
         Timber.d("GNSS fallback: $reason, ignored while stationary")
       } else {
-        onMovementHint(reason, displacement = true)
+        onMovementHint(reason, displacement = true, wifiJoined)
       }
     }
   }
@@ -252,36 +287,64 @@ class GnssFallback(
 
   /** Runs the check fired by the alarm set up in [scheduleCheck]. */
   fun onCheck() {
-    val action = synchronized(this) { policy?.onCheck(SystemClock.elapsedRealtime()) } ?: return
+    synchronized(this) {
+      val current = policy ?: return
+      // The alarm fires once, and the motion activity can arrive after the device sleeps again.
+      // Setting the next check now keeps the checks going when that answer is late.
+      scheduleCheck(current.currentIntervalMillis())
+    }
     placeWatcher.checkCell()
-    when (action) {
-      GnssFallbackPolicy.Action.REQUEST_GNSS -> {
-        Timber.d("GNSS fallback: no accurate location in time")
-        requestGnssFix()
-      }
-      GnssFallbackPolicy.Action.START_MOTION_WINDOW ->
-          Timber.d("GNSS fallback: held back motion, looking for a low-power location")
-      else -> {}
-    }
-    // The alarm fires once, so the check must be set again even when the state stays the same.
-    if (!applyState()) {
-      synchronized(this) { appliedState?.let(::scheduleCheckFor) }
-    }
+    // The motion activity comes first: a device that stopped moving needs no GNSS fix.
     motionActivityTracker.withCurrentActivity { activity ->
-      synchronized(this) {
-        policy?.onActivity(activity == MotionActivityClassifier.Activity.STATIONARY)
+      val action =
+          synchronized(this) {
+            policy?.let {
+              it.onActivity(
+                  stationary = activity == MotionActivityClassifier.Activity.STATIONARY,
+                  walking =
+                      activity == MotionActivityClassifier.Activity.WALKING ||
+                          activity == MotionActivityClassifier.Activity.RUNNING,
+              )
+              it.onCheck(SystemClock.elapsedRealtime())
+            }
+          } ?: return@withCurrentActivity
+      when (action) {
+        GnssFallbackPolicy.Action.REQUEST_GNSS -> {
+          Timber.d("GNSS fallback: no accurate location in time")
+          requestGnssFix()
+        }
+        GnssFallbackPolicy.Action.START_MOTION_WINDOW ->
+            Timber.d("GNSS fallback: held back motion, looking for a low-power location")
+        else -> {}
       }
-      applyState()
+      // The state can stay the same while the next check moves, like for a held back motion.
+      if (!applyState()) {
+        synchronized(this) { appliedState?.let(::scheduleCheckFor) }
+      }
     }
   }
 
-  private fun onMovementHint(reason: String, displacement: Boolean) {
+  private fun onMovementHint(reason: String, displacement: Boolean, wifiJoined: Boolean = false) {
     val now = SystemClock.elapsedRealtime()
-    val (action, pendingAt) =
+    val (action, pendingAt, wasMoving) =
         synchronized(this) {
-          policy?.let { it.onMovementHint(now, displacement) to it.pendingMotionWindowAt }
+          policy?.let {
+            val wasMoving = it.moving
+            Triple(
+                it.onMovementHint(now, displacement, wifiJoined),
+                it.pendingMotionWindowAt,
+                wasMoving,
+            )
+          }
         } ?: return
-    if (action == GnssFallbackPolicy.Action.START_MOTION_WINDOW) {
+    if (wasMoving) {
+      if (displacement) {
+        Timber.d("GNSS fallback: $reason while moving")
+      }
+      if (action == GnssFallbackPolicy.Action.START_MOTION_WINDOW) {
+        applyState()
+      }
+    } else if (action == GnssFallbackPolicy.Action.START_MOTION_WINDOW) {
       Timber.d("GNSS fallback: $reason, looking for a low-power location")
       applyState()
     } else if (pendingAt != null) {
@@ -295,11 +358,19 @@ class GnssFallback(
             synchronized(this) { policy?.stillAtSamePlace == true } &&
             now - ignoredMotionCellCheckAt >= movingIntervalMillis
     ) {
-      // Motion doesn't count at the same place, but it can mean the device leaves. A new cell
-      // proves it sooner than the next check.
+      // This motion came too soon after the last look, but it can mean the device leaves. A new
+      // cell proves it sooner than the next check.
       Timber.d("GNSS fallback: $reason at the same place, checking the cell")
       ignoredMotionCellCheckAt = now
       placeWatcher.checkCell()
+    }
+  }
+
+  /** The distance to the last published location, when [location] is at the same place. */
+  private fun samePlaceDistance(location: Location): Float? {
+    val published = lastPublishedLocation() ?: return null
+    return location.distanceTo(published).takeIf {
+      GnssFallbackPolicy.isSamePlace(it, location.accuracy, published.accuracy)
     }
   }
 
@@ -338,6 +409,16 @@ class GnssFallback(
           }
       )
     }
+    if (current.wantsGnssTracking != gnssTracking) {
+      gnssTracking = current.wantsGnssTracking
+      if (gnssTracking) {
+        Timber.d("GNSS fallback: only GNSS locates the device, tracking with GNSS")
+        registerGnssTracking()
+      } else {
+        Timber.d("GNSS fallback: GNSS tracking stopped")
+        locationProviderClient.removeLocationUpdates(gnssCallback)
+      }
+    }
     if (state == appliedState) {
       return false
     }
@@ -372,6 +453,19 @@ class GnssFallback(
     )
   }
 
+  @SuppressLint("MissingPermission")
+  private fun registerGnssTracking() {
+    locationProviderClient.requestLocationUpdates(
+        LocationRequest(
+            smallestDisplacement = 0f,
+            priority = LocatorPriority.HighAccuracy,
+            interval = Duration.ofMillis(movingIntervalMillis),
+        ),
+        gnssCallback,
+        looper,
+    )
+  }
+
   private fun armMotionSensor() {
     motionSensor?.let {
       sensorManager.cancelTriggerSensor(motionListener, it)
@@ -387,6 +481,10 @@ class GnssFallback(
     policy = null
     appliedState = null
     wasMoving = false
+    if (gnssTracking) {
+      gnssTracking = false
+      locationProviderClient.removeLocationUpdates(gnssCallback)
+    }
     locationProviderClient.removeLocationUpdates(probeCallback)
     alarmManager.cancel(checkIntent)
     motionSensor?.let { sensorManager.cancelTriggerSensor(motionListener, it) }
@@ -419,7 +517,13 @@ class GnssFallback(
   }
 
   private fun Location.toFix() =
-      GnssFallbackPolicy.Fix(latitude, longitude, accuracy, elapsedRealtimeNanos / 1_000_000)
+      GnssFallbackPolicy.Fix(
+          latitude,
+          longitude,
+          accuracy,
+          elapsedRealtimeNanos / 1_000_000,
+          provider == LocationManager.GPS_PROVIDER,
+      )
 
   companion object {
     private val MOTION_PROBE_INTERVAL: Duration = Duration.ofSeconds(20)
