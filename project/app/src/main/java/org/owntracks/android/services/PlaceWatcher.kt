@@ -24,10 +24,18 @@ import androidx.core.content.ContextCompat
  * accurate location. It never starts a scan: it reads the scans that the system and the network
  * location provider run anyway.
  *
+ * Reading a scan or the cells counts as a location access, and the system scans often while the
+ * screen is on. On a Wi-Fi network, only an accurate location reads them: leaving the network
+ * already tells that the device left.
+ *
  * Needs the fine location permission, which the caller checks.
  */
 @SuppressLint("MissingPermission")
-class PlaceWatcher(private val context: Context, private val onMoved: (reason: String) -> Unit) {
+class PlaceWatcher(
+    private val context: Context,
+    private val isWifiJoined: () -> Boolean,
+    private val onMoved: (reason: String) -> Unit,
+) {
   private val telephonyManager =
       context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager?
   private val wifiManager =
@@ -45,7 +53,10 @@ class PlaceWatcher(private val context: Context, private val onMoved: (reason: S
         val newReceiver =
             object : BroadcastReceiver() {
               override fun onReceive(context: Context, intent: Intent) {
-                if (!intent.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false)) {
+                if (
+                    !intent.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false) ||
+                        isWifiJoined()
+                ) {
                   return
                 }
                 if (fingerprint.isNewScan(recentAccessPoints())) {
@@ -83,8 +94,12 @@ class PlaceWatcher(private val context: Context, private val onMoved: (reason: S
 
   /** Reports a move when a serving cell doesn't belong to the place. */
   fun checkCell() {
-    requestServingCells { cells ->
-      cells.firstOrNull(fingerprint::isNewCell)?.let { onMoved("new cell $it") }
+    handler.post {
+      if (!isWifiJoined()) {
+        requestServingCells { cells ->
+          cells.firstOrNull(fingerprint::isNewCell)?.let { onMoved("new cell $it") }
+        }
+      }
     }
   }
 

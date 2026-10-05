@@ -21,6 +21,10 @@ class WifiLinkWatcher(context: Context, private val onChange: (joined: Boolean) 
   private val networks = mutableSetOf<Network>()
   private var callback: ConnectivityManager.NetworkCallback? = null
 
+  /** True while the device is on a Wi-Fi network. Only read on the main thread. */
+  val joined: Boolean
+    get() = networks.isNotEmpty()
+
   /** Can be called from any thread, like [stop]. */
   fun start() {
     handler.post(::register)

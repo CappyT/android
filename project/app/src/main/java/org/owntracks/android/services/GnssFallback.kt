@@ -204,7 +204,7 @@ class GnssFallback(
         }
       }
 
-  private val placeWatcher = PlaceWatcher(context, ::onRadioHint)
+  private val placeWatcher = PlaceWatcher(context, { wifiLinkWatcher.joined }, ::onRadioHint)
 
   private val wifiLinkWatcher =
       WifiLinkWatcher(context) { joined ->
