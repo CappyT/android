@@ -22,8 +22,10 @@ package org.owntracks.android.services
  *
  * While moving away from the place, an accurate GNSS fix shows that only GNSS locates the device,
  * so [wantsGnssTracking] asks for a periodic GNSS request instead of one fix per check. It ends
- * with the moving state, with an accurate location from another source, or without a fix in time. A
- * Wi-Fi network joined while moving opens a window: the network locates the device without GNSS.
+ * with the moving state, with an accurate location from another source, or without a fix in time.
+ * In a vehicle, the locations from another source must keep coming for most of a moving interval: a
+ * single one is often a Wi-Fi scan along the road. A Wi-Fi network joined while moving opens a
+ * window: the network locates the device without GNSS.
  *
  * Without a moving interval, a movement hint only opens a window, at most one per interval. A hint
  * that the rate limit holds back opens its window when the limit expires, unless an accurate
@@ -87,6 +89,9 @@ class GnssFallbackPolicy(
   private var origin: Fix? = null
   private var displaced = false
   private var walking = false
+  private var automotive = false
+  private var otherSourceSince: Long? = null
+  private var otherSourceLastAt: Long? = null
   private var looking = false
   private var looks = 0
   private var gnssTracking = false
@@ -173,7 +178,7 @@ class GnssFallbackPolicy(
       if (previous == null || !isSamePlace(previous, fix)) {
         gnssFailures = 0
       }
-      if (!fix.fromGnss) {
+      if (!fix.fromGnss && endsGnssTracking(fix)) {
         gnssTracking = false
       }
       noteDisplacement(fix)
@@ -214,6 +219,25 @@ class GnssFallbackPolicy(
       return Action.REQUEST_GNSS
     }
     return Action.NONE
+  }
+
+  /**
+   * In a vehicle, a single accurate location from another source keeps GNSS tracking. It ends when
+   * such locations keep coming for most of a moving interval.
+   */
+  private fun endsGnssTracking(fix: Fix): Boolean {
+    val since = otherSourceSince
+    val last = otherSourceLastAt
+    otherSourceLastAt = fix.fixedAt
+    if (!gnssTracking || !automotive) {
+      otherSourceSince = null
+      return true
+    }
+    if (since == null || last == null || fix.fixedAt - last > movingIntervalMillis * 3 / 2) {
+      otherSourceSince = fix.fixedAt
+      return false
+    }
+    return fix.fixedAt - since >= movingSlackMillis
   }
 
   private fun onFreshAccurateLocation(fix: Fix, now: Long): Action {
@@ -304,10 +328,12 @@ class GnssFallbackPolicy(
    * Feeds the motion activity. A stationary device ends the moving state.
    *
    * @param walking true while the device counts steps, on a walk or a run.
+   * @param automotive true while the device travels in a vehicle.
    */
-  fun onActivity(stationary: Boolean, walking: Boolean = false) {
+  fun onActivity(stationary: Boolean, walking: Boolean = false, automotive: Boolean = false) {
     this.stationary = stationary
     this.walking = walking
+    this.automotive = automotive
     if (!stationary) {
       return
     }
