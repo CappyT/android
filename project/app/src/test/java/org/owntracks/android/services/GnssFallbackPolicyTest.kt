@@ -322,6 +322,31 @@ class GnssFallbackPolicyTest {
   }
 
   @Test
+  fun `In a vehicle, a single location from another source keeps GNSS tracking`() {
+    val policy = movingPolicy()
+    policy.onActivity(stationary = false, automotive = true)
+    policy.onGnssFix(fix(15f, 61_000, northMeters = 1_000.0), 61_000)
+    policy.fresh(20f, 100_000, northMeters = 2_000.0)
+    assertTrue(policy.wantsGnssTracking)
+    policy.onGnssFix(fix(15f, 121_000, northMeters = 3_000.0), 121_000)
+    // The next one comes too late to belong to the same run.
+    policy.fresh(20f, 100_000 + 90_001, northMeters = 5_000.0)
+    assertTrue(policy.wantsGnssTracking)
+  }
+
+  @Test
+  fun `In a vehicle, locations from another source that keep coming end GNSS tracking`() {
+    val policy = movingPolicy()
+    policy.onActivity(stationary = false, automotive = true)
+    policy.onGnssFix(fix(15f, 61_000, northMeters = 1_000.0), 61_000)
+    policy.fresh(20f, 100_000, northMeters = 2_000.0)
+    policy.fresh(20f, 144_999, northMeters = 2_500.0)
+    assertTrue(policy.wantsGnssTracking)
+    policy.fresh(20f, 145_000, northMeters = 2_500.0)
+    assertFalse(policy.wantsGnssTracking)
+  }
+
+  @Test
   fun `GNSS tracking without a fix in time ends as a failed request`() {
     val policy = movingPolicy()
     policy.onGnssFix(fix(15f, 61_000, northMeters = 1_000.0), 61_000)

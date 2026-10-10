@@ -304,6 +304,7 @@ class GnssFallback(
                   walking =
                       activity == MotionActivityClassifier.Activity.WALKING ||
                           activity == MotionActivityClassifier.Activity.RUNNING,
+                  automotive = activity == MotionActivityClassifier.Activity.AUTOMOTIVE,
               )
               it.onCheck(SystemClock.elapsedRealtime())
             }
