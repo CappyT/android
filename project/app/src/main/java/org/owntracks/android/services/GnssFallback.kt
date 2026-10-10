@@ -103,6 +103,9 @@ class GnssFallback(
               synchronized(this@GnssFallback) {
                 policy?.onLocation(location.toFix(), SystemClock.elapsedRealtime())
               }
+          Timber.d(
+              "GNSS fallback: ${location.provider} location, accuracy ${location.accuracy}m, action $action"
+          )
           when (action) {
             GnssFallbackPolicy.Action.PUBLISH -> {
               val distance = samePlaceDistance(location)
@@ -296,6 +299,7 @@ class GnssFallback(
     placeWatcher.checkCell()
     // The motion activity comes first: a device that stopped moving needs no GNSS fix.
     motionActivityTracker.withCurrentActivity { activity ->
+      Timber.d("GNSS fallback: check, activity $activity")
       val action =
           synchronized(this) {
             policy?.let {
