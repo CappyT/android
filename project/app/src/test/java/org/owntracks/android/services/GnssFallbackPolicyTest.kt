@@ -426,6 +426,14 @@ class GnssFallbackPolicyTest {
   }
 
   @Test
+  fun `While walking, a moving check waits as long as still for a missing location`() {
+    val policy = movingPolicy()
+    policy.onActivity(stationary = false, walking = true)
+    assertEquals(Action.NONE, policy.onCheck(1_000 + interval * 3 / 2))
+    assertEquals(Action.REQUEST_GNSS, policy.onCheck(1_001 + interval * 3 / 2))
+  }
+
+  @Test
   fun `GNSS requests are rate limited to one per moving interval while moving`() {
     val policy = movingPolicy()
     policy.onActivity(stationary = false, walking = true)
@@ -767,11 +775,13 @@ class GnssFallbackPolicyTest {
   @Test
   fun `A GNSS fix in time is not a failure`() {
     val policy = movingAtKnownPlace()
-    policy.onActivity(stationary = false, walking = true)
     policy.onRadio(3_000)
     assertEquals(Action.REQUEST_GNSS, policy.onCheck(130_000))
+    // On a walk, the fix at the place doesn't end moving and the next location ends GNSS tracking.
+    policy.onActivity(stationary = false, walking = true)
     policy.onGnssFix(fix(15f, 140_000), 140_000)
     policy.fresh(20f, 180_000, northMeters = 600.0)
+    policy.onActivity(stationary = false)
     assertEquals(Action.REQUEST_GNSS, policy.onCheck(180_000 + movingInterval * 2 + 1))
   }
 

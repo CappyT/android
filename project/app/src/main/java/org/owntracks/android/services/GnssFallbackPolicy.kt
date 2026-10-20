@@ -236,11 +236,12 @@ class GnssFallbackPolicy(
 
   /**
    * How long the moving device can go without an accurate location. The low-power providers often
-   * deliver later than their interval, so their last location lasts longer than a GNSS fix.
+   * deliver later than their interval, so their last location lasts longer than a GNSS fix. A walk
+   * covers little ground, and in a town GNSS often finds no fix where the network locates well.
    */
   private fun movingStaleAfterMillis(): Long =
       when {
-        !displaced -> staleAfterMillis
+        !displaced || walking -> staleAfterMillis
         lastAccurate?.fromGnss == false -> movingIntervalMillis * 2
         else -> movingIntervalMillis * 3 / 2
       }
