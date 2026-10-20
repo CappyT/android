@@ -15,6 +15,7 @@ class PlaceFingerprint(
   private var anchor: Pair<Double, Double>? = null
   private val cells = mutableSetOf<String>()
   private val accessPoints = mutableSetOf<String>()
+  private val reportedCells = mutableSetOf<String>()
 
   fun onAccurateLocation(
       latitude: Double,
@@ -31,11 +32,22 @@ class PlaceFingerprint(
       this.cells.clear()
       this.accessPoints.clear()
     }
+    reportedCells.clear()
     if (this.cells.size + cells.size <= MAX_ENTRIES) this.cells += cells
     if (this.accessPoints.size + accessPoints.size <= MAX_ENTRIES) this.accessPoints += accessPoints
   }
 
   fun isNewCell(cell: String): Boolean = cells.isNotEmpty() && cell !in cells
+
+  /**
+   * The first of [servingCells] that is new and wasn't returned since the last accurate location. A
+   * device that stops at a new place keeps the same new cell, and reporting it at every check would
+   * keep it moving.
+   */
+  fun takeNewCell(servingCells: Set<String>): String? =
+      servingCells
+          .firstOrNull { isNewCell(it) && it !in reportedCells }
+          ?.also { reportedCells += it }
 
   /** A scan that shares too few access points with this place. Small scans say too little. */
   fun isNewScan(scan: Set<String>): Boolean {

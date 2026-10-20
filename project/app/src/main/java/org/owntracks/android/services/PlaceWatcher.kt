@@ -97,7 +97,7 @@ class PlaceWatcher(
     handler.post {
       if (!isWifiJoined()) {
         requestServingCells { cells ->
-          cells.firstOrNull(fingerprint::isNewCell)?.let { onMoved("new cell $it") }
+          fingerprint.takeNewCell(cells)?.let { onMoved("new cell $it") }
         }
       }
     }

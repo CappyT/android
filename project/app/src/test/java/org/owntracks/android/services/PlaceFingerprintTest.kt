@@ -1,6 +1,8 @@
 package org.owntracks.android.services
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -40,6 +42,18 @@ class PlaceFingerprintTest {
     fingerprint.at(garden, cells = setOf("2"))
     assertFalse(fingerprint.isNewCell("1"))
     assertFalse(fingerprint.isNewCell("2"))
+  }
+
+  @Test
+  fun `A new cell is taken once until the next accurate location`() {
+    val fingerprint = PlaceFingerprint()
+    fingerprint.at(home, cells = setOf("1"))
+    assertEquals("2", fingerprint.takeNewCell(setOf("1", "2")))
+    assertNull(fingerprint.takeNewCell(setOf("2")))
+    assertEquals("3", fingerprint.takeNewCell(setOf("3")))
+    fingerprint.at(town, cells = setOf("7"))
+    assertEquals("2", fingerprint.takeNewCell(setOf("2")))
+    assertNull(fingerprint.takeNewCell(setOf("7")))
   }
 
   @Test
