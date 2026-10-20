@@ -23,9 +23,14 @@ package org.owntracks.android.services
  * While moving away from the place, an accurate GNSS fix shows that only GNSS locates the device,
  * so [wantsGnssTracking] asks for a periodic GNSS request instead of one fix per check. It ends
  * with the moving state, with an accurate location from another source, or without a fix in time.
- * In a vehicle, the locations from another source must keep coming for most of a moving interval: a
- * single one is often a Wi-Fi scan along the road. A Wi-Fi network joined while moving opens a
- * window: the network locates the device without GNSS.
+ * Unless the device walks, the locations from another source must keep coming for most of a moving
+ * interval: in a vehicle, a single one is often a Wi-Fi scan along the road, and the motion
+ * activity often can't tell a vehicle yet. A Wi-Fi network joined while moving opens a window: the
+ * network locates the device without GNSS, and its first accurate location ends GNSS tracking at
+ * once.
+ *
+ * A radio hint while moving proves a displacement. Without a recent accurate location, it requests
+ * GNSS at once: the next check can be most of a moving interval away.
  *
  * Without a moving interval, a movement hint only opens a window, at most one per interval. A hint
  * that the rate limit holds back opens its window when the limit expires, unless an accurate
@@ -89,7 +94,7 @@ class GnssFallbackPolicy(
   private var origin: Fix? = null
   private var displaced = false
   private var walking = false
-  private var automotive = false
+  private var wifiWindow = false
   private var otherSourceSince: Long? = null
   private var otherSourceLastAt: Long? = null
   private var looking = false
@@ -127,7 +132,8 @@ class GnssFallbackPolicy(
    * @param displacement true when the hint comes from the radios, which change when the device
    *   changes place. The motion sensors also fire when the device moves in place.
    * @param wifiJoined true when the device joined a Wi-Fi network.
-   * @return [Action.START_MOTION_WINDOW] when the caller should look for a location now.
+   * @return [Action.START_MOTION_WINDOW] when the caller should look for a location now,
+   *   [Action.REQUEST_GNSS] when a displacement while moving finds no recent accurate location.
    */
   fun onMovementHint(now: Long, displacement: Boolean, wifiJoined: Boolean = false): Action {
     if (displacement && gnssFailures > 0) {
@@ -140,9 +146,12 @@ class GnssFallbackPolicy(
     lastMotionAt = now
     stationary = false
     if (moving) {
-      // A new cell or network while moving means the device is not at the same place.
+      // A new cell or network while moving means the device is not at the same place. Joining a
+      // network usually means arriving at one.
       if (displacement) {
-        resetSamePlace()
+        if (!wifiJoined) {
+          resetSamePlace()
+        }
         markDisplaced()
       }
       if (wifiJoined && !inMotionWindow) {
@@ -150,7 +159,11 @@ class GnssFallbackPolicy(
         // would request GNSS, often indoors.
         motionWindowStartedAt = now
         inMotionWindow = true
+        wifiWindow = true
         return Action.START_MOTION_WINDOW
+      }
+      if (displacement && !inMotionWindow && !gnssTracking && isMovingStale(now)) {
+        return gnssIfDue(now)
       }
       return Action.NONE
     }
@@ -222,14 +235,30 @@ class GnssFallbackPolicy(
   }
 
   /**
-   * In a vehicle, a single accurate location from another source keeps GNSS tracking. It ends when
-   * such locations keep coming for most of a moving interval.
+   * How long the moving device can go without an accurate location. The low-power providers often
+   * deliver later than their interval, so their last location lasts longer than a GNSS fix.
+   */
+  private fun movingStaleAfterMillis(): Long =
+      when {
+        !displaced -> staleAfterMillis
+        lastAccurate?.fromGnss == false -> movingIntervalMillis * 2
+        else -> movingIntervalMillis * 3 / 2
+      }
+
+  private fun isMovingStale(now: Long): Boolean =
+      lastAccurate?.fixedAt.let { it == null || now - it > movingStaleAfterMillis() }
+
+  /**
+   * Unless the device walks, a single accurate location from another source keeps GNSS tracking. It
+   * ends when such locations keep coming for most of a moving interval, or with the first one after
+   * a Wi-Fi network was joined.
    */
   private fun endsGnssTracking(fix: Fix): Boolean {
     val since = otherSourceSince
     val last = otherSourceLastAt
     otherSourceLastAt = fix.fixedAt
-    if (!gnssTracking || !automotive) {
+    val arrived = inMotionWindow && wifiWindow && fix.fixedAt >= motionWindowStartedAt
+    if (!gnssTracking || walking || arrived) {
       otherSourceSince = null
       return true
     }
@@ -328,12 +357,10 @@ class GnssFallbackPolicy(
    * Feeds the motion activity. A stationary device ends the moving state.
    *
    * @param walking true while the device counts steps, on a walk or a run.
-   * @param automotive true while the device travels in a vehicle.
    */
-  fun onActivity(stationary: Boolean, walking: Boolean = false, automotive: Boolean = false) {
+  fun onActivity(stationary: Boolean, walking: Boolean = false) {
     this.stationary = stationary
     this.walking = walking
-    this.automotive = automotive
     if (!stationary) {
       return
     }
@@ -372,9 +399,7 @@ class GnssFallbackPolicy(
         lastGnssRequestAt = now
         return Action.NONE
       }
-      val staleAfter = if (displaced) movingIntervalMillis * 3 / 2 else staleAfterMillis
-      val stale = lastAccurateAt == null || now - lastAccurateAt > staleAfter
-      return if (stale) gnssIfDue(now) else Action.NONE
+      return if (isMovingStale(now)) gnssIfDue(now) else Action.NONE
     }
     val pendingAt = pendingMotionWindowAt
     if (pendingAt != null && now >= pendingAt) {
@@ -397,6 +422,7 @@ class GnssFallbackPolicy(
     motionWindowStartedAt = now
     motionPending = false
     inMotionWindow = true
+    wifiWindow = false
     if (movingEnabled) {
       startMoving(displaced)
     }

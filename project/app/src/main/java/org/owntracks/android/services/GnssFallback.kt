@@ -171,17 +171,13 @@ class GnssFallback(
         override fun onLocationResult(locationResult: LocationResult) {
           val location = locationResult.lastLocation
           lastGnssFixElapsedRealtimeNanos = location.elapsedRealtimeNanos
-          val moving =
-              synchronized(this@GnssFallback) {
-                policy?.let {
-                  val moving = it.moving
-                  it.onGnssFix(location.toFix(), SystemClock.elapsedRealtime())
-                  moving
-                }
-              } ?: false
+          synchronized(this@GnssFallback) {
+            policy?.onGnssFix(location.toFix(), SystemClock.elapsedRealtime())
+          }
           recordPlace(location)
-          // While moving, the fixes keep coming after the device stops.
-          val distance = if (moving) samePlaceDistance(location) else null
+          // While moving, the fixes keep coming after the device stops. A single fix can come
+          // after the device went still.
+          val distance = if (usesMotionActivity) samePlaceDistance(location) else null
           if (distance != null) {
             Timber.d("GNSS fallback: GNSS fix is ${distance}m away, same place")
           } else {
@@ -308,7 +304,6 @@ class GnssFallback(
                   walking =
                       activity == MotionActivityClassifier.Activity.WALKING ||
                           activity == MotionActivityClassifier.Activity.RUNNING,
-                  automotive = activity == MotionActivityClassifier.Activity.AUTOMOTIVE,
               )
               it.onCheck(SystemClock.elapsedRealtime())
             }
@@ -346,8 +341,13 @@ class GnssFallback(
       if (displacement) {
         Timber.d("GNSS fallback: $reason while moving")
       }
-      if (action == GnssFallbackPolicy.Action.START_MOTION_WINDOW) {
-        applyState()
+      when (action) {
+        GnssFallbackPolicy.Action.START_MOTION_WINDOW -> applyState()
+        GnssFallbackPolicy.Action.REQUEST_GNSS -> {
+          Timber.d("GNSS fallback: displaced without a recent accurate location")
+          requestGnssFix()
+        }
+        else -> {}
       }
     } else if (action == GnssFallbackPolicy.Action.START_MOTION_WINDOW) {
       Timber.d("GNSS fallback: $reason, looking for a low-power location")
