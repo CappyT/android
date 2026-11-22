@@ -789,6 +789,9 @@ class GnssFallbackPolicyTest {
     assertEquals(Action.REQUEST_GNSS, policy.onRadio(260_000))
     assertEquals(Action.NONE, policy.onRadio(320_000))
     assertEquals(Action.NONE, policy.onRadio(380_000))
+    // The failed retries don't grow the backoff: the next request waits one interval.
+    assertEquals(Action.NONE, policy.onCheck(260_000 + interval - 1))
+    assertEquals(Action.REQUEST_GNSS, policy.onCheck(260_000 + interval))
   }
 
   @Test

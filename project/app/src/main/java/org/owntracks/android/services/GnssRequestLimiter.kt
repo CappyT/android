@@ -6,7 +6,8 @@ package org.owntracks.android.services
  * A request that gets no accurate fix within [TIMEOUT_MILLIS] failed: the sky is probably hidden.
  * The next request then waits one interval, growing to four with more failures, until a GNSS fix or
  * an accurate location at another place. A radio hint allows one request sooner, up to
- * [MAX_HINT_RETRY_FAILURES] failures: in a subway or a tunnel, each new cell would search again.
+ * [MAX_HINT_RETRIES] times: in a subway or a tunnel, each new cell would search again. A sooner
+ * request that fails doesn't grow the backoff.
  *
  * All times are in the [android.os.SystemClock.elapsedRealtime] timebase.
  */
@@ -14,14 +15,16 @@ class GnssRequestLimiter(private val intervalMillis: Long) {
   private var lastRequestAt: Long? = null
   private var pendingSince: Long? = null
   private var failures = 0
+  private var hintRetries = 0
   private var retryGranted = false
+  private var pendingIsRetry = false
 
   /** Counts a request that got no answer in time as a failure. */
   fun settle(now: Long) {
     val since = pendingSince ?: return
     if (now - since > TIMEOUT_MILLIS) {
       pendingSince = null
-      failures++
+      fail()
     }
   }
 
@@ -33,11 +36,13 @@ class GnssRequestLimiter(private val intervalMillis: Long) {
   fun requestIfDue(now: Long, limitMillis: Long): Boolean {
     settle(now)
     val lastRequest = lastRequestAt
-    if (lastRequest != null && now - lastRequest < backedOff(limitMillis)) {
+    val early = lastRequest != null && now - lastRequest < backedOff(limitMillis)
+    if (early && (!retryGranted || now - lastRequest < limitMillis)) {
       return false
     }
     lastRequestAt = now
     pendingSince = now
+    pendingIsRetry = early
     retryGranted = false
     return true
   }
@@ -45,7 +50,7 @@ class GnssRequestLimiter(private val intervalMillis: Long) {
   /** An inaccurate fix, like a weak one indoors, counts as a failure. */
   fun onFix(accurate: Boolean) {
     pendingSince = null
-    if (accurate) failures = 0 else failures++
+    if (accurate) resetFailures() else fail()
   }
 
   /** A periodic request that found no fix in time failed like a single request. */
@@ -57,18 +62,25 @@ class GnssRequestLimiter(private val intervalMillis: Long) {
   /** An accurate location at another place: the sky can be open there. */
   fun resetFailures() {
     failures = 0
+    hintRetries = 0
+    pendingIsRetry = false
   }
 
   fun onRadioHint(now: Long) {
     // A request that failed before this hint must count, or the hints never reach the limit.
     settle(now)
-    if (failures in 1..MAX_HINT_RETRY_FAILURES) {
+    if (failures > 0 && hintRetries < MAX_HINT_RETRIES) {
       retryGranted = true
     }
   }
 
+  private fun fail() {
+    if (pendingIsRetry) hintRetries++ else failures++
+    pendingIsRetry = false
+  }
+
   private fun backedOff(limitMillis: Long): Long {
-    if (failures == 0 || retryGranted) {
+    if (failures == 0) {
       return limitMillis
     }
     val shift = (failures - 1).coerceAtMost(MAX_BACKOFF_SHIFT)
@@ -80,6 +92,6 @@ class GnssRequestLimiter(private val intervalMillis: Long) {
     const val TIMEOUT_MILLIS = 40_000L
     // One, two, then four intervals.
     private const val MAX_BACKOFF_SHIFT = 2
-    private const val MAX_HINT_RETRY_FAILURES = 2
+    private const val MAX_HINT_RETRIES = 2
   }
 }
