@@ -70,13 +70,7 @@ class WifiLinkWatcher(context: Context, private val onChange: (joined: Boolean) 
     networks.clear()
     // The callback reports the networks that already exist as new, so they must not count as a
     // join.
-    connectivityManager.activeNetwork
-        ?.takeIf {
-          connectivityManager
-              .getNetworkCapabilities(it)
-              ?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
-        }
-        ?.let { networks.add(it) }
+    networks.addAll(wifiNetworks(connectivityManager))
     val newCallback =
         object : ConnectivityManager.NetworkCallback() {
           override fun onAvailable(network: Network) {
@@ -107,5 +101,19 @@ class WifiLinkWatcher(context: Context, private val onChange: (joined: Boolean) 
   companion object {
     // Measured drops at home lasted 4-30 s.
     private const val LOST_GRACE_MILLIS = 45_000L
+
+    /**
+     * The Wi-Fi networks that the callback reports, which exclude VPNs. A VPN over Wi-Fi also has
+     * the Wi-Fi transport, and is the active network: it would never be reported lost.
+     */
+    // The callback replacement for allNetworks reports each network as new.
+    @Suppress("DEPRECATION")
+    internal fun wifiNetworks(connectivityManager: ConnectivityManager): List<Network> =
+        connectivityManager.allNetworks.filter {
+          connectivityManager.getNetworkCapabilities(it)?.let { capabilities ->
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) &&
+                capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+          } == true
+        }
   }
 }
