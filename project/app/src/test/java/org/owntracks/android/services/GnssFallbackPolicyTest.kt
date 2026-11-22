@@ -712,6 +712,22 @@ class GnssFallbackPolicyTest {
   }
 
   @Test
+  fun `A motion in a vehicle at the same place moves away from it`() {
+    val policy = stillAtSamePlacePolicy()
+    policy.onActivity(stationary = false, automotive = true)
+    assertEquals(Action.START_MOTION_WINDOW, policy.onMotion(300_000))
+    assertEquals(Action.REQUEST_GNSS, policy.fresh(1647f, 310_000, northMeters = 800.0))
+  }
+
+  @Test
+  fun `A vehicle activity during a look proves a displacement`() {
+    val policy = stillAtSamePlacePolicy()
+    assertEquals(Action.START_MOTION_WINDOW, policy.onMotion(300_000))
+    policy.onActivity(stationary = false, automotive = true)
+    assertEquals(Action.REQUEST_GNSS, policy.onCheck(360_000))
+  }
+
+  @Test
   fun `A stationary activity turns still at the same place into plain still`() {
     val policy = stillAtSamePlacePolicy()
     policy.onActivity(stationary = true)

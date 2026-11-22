@@ -18,7 +18,9 @@ package org.owntracks.android.services
  * locations stayed at the same place, a motion only starts a look: the moving state without GNSS at
  * the end of its window. Looks that find the same place again are spaced out, up to one per
  * interval. Until a radio hint or a location away from the place it started at proves a
- * displacement, a missing or inaccurate location requests GNSS as slowly as in the still state.
+ * displacement, a missing or inaccurate location requests GNSS as slowly as in the still state. In
+ * a vehicle, the device stops at the same place only for a while, so a motion starts moving away
+ * from the place, and the vehicle activity proves the displacement of a look.
  *
  * While moving away from the place, an accurate GNSS fix shows that only GNSS locates the device,
  * so [wantsGnssTracking] asks for a periodic GNSS request instead of one fix per check. It ends
@@ -88,6 +90,7 @@ class GnssFallbackPolicy(
   private var origin: Fix? = null
   private var displaced = false
   private var walking = false
+  private var automotive = false
   private var wifiWindow = false
   private var otherSourceSince: Long? = null
   private var otherSourceLastAt: Long? = null
@@ -132,7 +135,7 @@ class GnssFallbackPolicy(
     if (displacement) {
       gnssRequests.onRadioHint(now)
     }
-    val look = stillAtSamePlace && !displacement
+    val look = stillAtSamePlace && !displacement && !automotive
     if (look && lastMotionWindowAt.let { it != null && now - it < lookBackoffMillis() }) {
       return Action.NONE
     }
@@ -165,7 +168,7 @@ class GnssFallbackPolicy(
       motionPending = true
       return Action.NONE
     }
-    startMotionWindow(now, displacement)
+    startMotionWindow(now, displacement || automotive)
     looking = look
     return Action.START_MOTION_WINDOW
   }
@@ -350,10 +353,15 @@ class GnssFallbackPolicy(
    * Feeds the motion activity. A stationary device ends the moving state.
    *
    * @param walking true while the device counts steps, on a walk or a run.
+   * @param automotive true while the device is in a vehicle.
    */
-  fun onActivity(stationary: Boolean, walking: Boolean = false) {
+  fun onActivity(stationary: Boolean, walking: Boolean = false, automotive: Boolean = false) {
     this.stationary = stationary
     this.walking = walking
+    this.automotive = automotive
+    if (automotive && moving) {
+      markDisplaced()
+    }
     if (!stationary) {
       return
     }
