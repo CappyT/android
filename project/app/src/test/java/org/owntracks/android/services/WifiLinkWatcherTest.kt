@@ -3,34 +3,59 @@ package org.owntracks.android.services
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
+import android.net.NetworkInfo
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 
 class WifiLinkWatcherTest {
-  private fun capabilities(wifi: Boolean, vpn: Boolean): NetworkCapabilities = mock {
-    on { hasTransport(NetworkCapabilities.TRANSPORT_WIFI) } doReturn wifi
-    on { hasTransport(NetworkCapabilities.TRANSPORT_VPN) } doReturn vpn
-    on { hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN) } doReturn !vpn
+  private class Link(
+      wifi: Boolean = true,
+      vpn: Boolean = false,
+      trusted: Boolean = true,
+      restricted: Boolean = false,
+      val connected: Boolean = true,
+  ) {
+    val network = mock<Network>()
+    val capabilities: NetworkCapabilities = mock {
+      on { hasTransport(NetworkCapabilities.TRANSPORT_WIFI) } doReturn wifi
+      on { hasTransport(NetworkCapabilities.TRANSPORT_VPN) } doReturn vpn
+      on { hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN) } doReturn !vpn
+      on { hasCapability(NetworkCapabilities.NET_CAPABILITY_TRUSTED) } doReturn trusted
+      on { hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED) } doReturn !restricted
+    }
+    val info: NetworkInfo = mock { on { isConnected } doReturn connected }
+  }
+
+  private fun connectivityManager(vararg links: Link): ConnectivityManager = mock {
+    on { allNetworks } doReturn links.map { it.network }.toTypedArray()
+    for (link in links) {
+      on { getNetworkCapabilities(link.network) } doReturn link.capabilities
+      on { getNetworkInfo(link.network) } doReturn link.info
+    }
   }
 
   @Test
   fun `A VPN over Wi-Fi is not a Wi-Fi network, the Wi-Fi under it is`() {
-    val vpn = mock<Network>()
-    val wifi = mock<Network>()
-    val mobile = mock<Network>()
-    val vpnCapabilities = capabilities(wifi = true, vpn = true)
-    val wifiCapabilities = capabilities(wifi = true, vpn = false)
-    val mobileCapabilities = capabilities(wifi = false, vpn = false)
-    val connectivityManager =
-        mock<ConnectivityManager> {
-          on { activeNetwork } doReturn vpn
-          on { allNetworks } doReturn arrayOf(vpn, wifi, mobile)
-          on { getNetworkCapabilities(vpn) } doReturn vpnCapabilities
-          on { getNetworkCapabilities(wifi) } doReturn wifiCapabilities
-          on { getNetworkCapabilities(mobile) } doReturn mobileCapabilities
-        }
-    assertEquals(listOf(wifi), WifiLinkWatcher.wifiNetworks(connectivityManager))
+    val vpn = Link(vpn = true)
+    val wifi = Link()
+    val mobile = Link(wifi = false)
+    assertEquals(
+        listOf(wifi.network),
+        WifiLinkWatcher.wifiNetworks(connectivityManager(vpn, wifi, mobile)),
+    )
+  }
+
+  @Test
+  fun `Only the Wi-Fi networks that the callback reports are seeded`() {
+    val wifi = Link()
+    val untrusted = Link(trusted = false)
+    val restricted = Link(restricted = true)
+    val connecting = Link(connected = false)
+    assertEquals(
+        listOf(wifi.network),
+        WifiLinkWatcher.wifiNetworks(connectivityManager(untrusted, restricted, connecting, wifi)),
+    )
   }
 }

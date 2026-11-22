@@ -103,17 +103,20 @@ class WifiLinkWatcher(context: Context, private val onChange: (joined: Boolean) 
     private const val LOST_GRACE_MILLIS = 45_000L
 
     /**
-     * The Wi-Fi networks that the callback reports, which exclude VPNs. A VPN over Wi-Fi also has
-     * the Wi-Fi transport, and is the active network: it would never be reported lost.
+     * The Wi-Fi networks that the callback reports: connected, and with the default capabilities of
+     * its request. A seeded network that the callback never reports would never be reported lost,
+     * like a VPN over Wi-Fi, which also has the Wi-Fi transport.
      */
-    // The callback replacement for allNetworks reports each network as new.
+    // The callback replacement for allNetworks and getNetworkInfo reports each network as new.
     @Suppress("DEPRECATION")
     internal fun wifiNetworks(connectivityManager: ConnectivityManager): List<Network> =
-        connectivityManager.allNetworks.filter {
-          connectivityManager.getNetworkCapabilities(it)?.let { capabilities ->
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) &&
-                capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
-          } == true
+        connectivityManager.allNetworks.filter { network ->
+          connectivityManager.getNetworkCapabilities(network)?.let {
+            it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) &&
+                it.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN) &&
+                it.hasCapability(NetworkCapabilities.NET_CAPABILITY_TRUSTED) &&
+                it.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
+          } == true && connectivityManager.getNetworkInfo(network)?.isConnected == true
         }
   }
 }
