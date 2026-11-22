@@ -728,6 +728,29 @@ class GnssFallbackPolicyTest {
   }
 
   @Test
+  fun `A moving state without an accurate location for two intervals goes still`() {
+    val policy = movingPolicy()
+    policy.onCheck(1_000 + interval * 2)
+    assertTrue(policy.moving)
+    policy.onCheck(1_000 + interval * 2 + 1)
+    assertFalse(policy.moving)
+    assertTrue(policy.stillAtSamePlace)
+    assertEquals(interval, policy.currentIntervalMillis())
+  }
+
+  @Test
+  fun `After a moving state without an accurate location, a motion only starts a look`() {
+    val policy = movingPolicy()
+    val endedAt = 1_000 + interval * 2 + 1
+    policy.onCheck(endedAt)
+    assertEquals(Action.START_MOTION_WINDOW, policy.onMotion(endedAt + movingInterval))
+    assertEquals(
+        Action.NONE,
+        policy.fresh(1647f, endedAt + movingInterval + 10_000, northMeters = 800.0),
+    )
+  }
+
+  @Test
   fun `A stationary activity turns still at the same place into plain still`() {
     val policy = stillAtSamePlacePolicy()
     policy.onActivity(stationary = true)
@@ -779,7 +802,8 @@ class GnssFallbackPolicyTest {
 
   @Test
   fun `The GNSS limit grows to four intervals after repeated failures`() {
-    val policy = movingPolicy()
+    // Without a moving interval: a moving state without a location ends after two intervals.
+    val policy = windowless()
     var at = 130_000L
     assertEquals(Action.REQUEST_GNSS, policy.onCheck(at))
     for (gap in listOf(interval, interval * 2, interval * 4, interval * 4)) {

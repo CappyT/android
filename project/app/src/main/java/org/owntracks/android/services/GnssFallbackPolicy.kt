@@ -22,6 +22,10 @@ package org.owntracks.android.services
  * a vehicle, the device stops at the same place only for a while, so a motion starts moving away
  * from the place, and the vehicle activity proves the displacement of a look.
  *
+ * A moving state without an accurate location for [MAX_UNLOCATED_INTERVALS] intervals ends like a
+ * stop at the same place: nothing locates the device, and the probe and the check would run every
+ * moving interval for nothing.
+ *
  * While moving away from the place, an accurate GNSS fix shows that only GNSS locates the device,
  * so [wantsGnssTracking] asks for a periodic GNSS request instead of one fix per check. It ends
  * with the moving state, with an accurate location from another source, or without a fix in time.
@@ -76,6 +80,7 @@ class GnssFallbackPolicy(
 
   // One interval for the next location, plus half an interval of slack for batching.
   private val staleAfterMillis = intervalMillis * 3 / 2
+  private val unlocatedLimitMillis = intervalMillis * MAX_UNLOCATED_INTERVALS
   private var lastAccurate: Fix? = null
   private var place: Fix? = null
   private val gnssRequests = GnssRequestLimiter(intervalMillis)
@@ -91,6 +96,7 @@ class GnssFallbackPolicy(
   private var displaced = false
   private var walking = false
   private var automotive = false
+  private var movingSince = 0L
   private var wifiWindow = false
   private var otherSourceSince: Long? = null
   private var otherSourceLastAt: Long? = null
@@ -303,7 +309,7 @@ class GnssFallbackPolicy(
     }
     val lastPlace = place
     if (movingEnabled && lastPlace != null && !isSamePlace(lastPlace, fix)) {
-      startMoving(displaced = true)
+      startMoving(now, displaced = true)
       place = fix
       trackSamePlace(fix)
       lastPublishAt = now
@@ -342,7 +348,7 @@ class GnssFallbackPolicy(
     }
     val lastPlace = place
     if (movingEnabled && lastPlace != null && !isSamePlace(lastPlace, fix)) {
-      startMoving(displaced = true)
+      startMoving(now, displaced = true)
       trackSamePlace(fix)
       lastPublishAt = now
     }
@@ -389,6 +395,10 @@ class GnssFallbackPolicy(
     }
     val lastAccurateAt = lastAccurate?.fixedAt
     if (moving) {
+      if (!gnssTracking && now - maxOf(movingSince, lastAccurateAt ?: 0) > unlocatedLimitMillis) {
+        endMovingUnlocated()
+        return Action.NONE
+      }
       if (gnssTracking) {
         val fixDue = movingIntervalMillis * 3 / 2 + GnssRequestLimiter.TIMEOUT_MILLIS
         if (lastAccurateAt != null && now - lastAccurateAt <= fixDue) {
@@ -424,13 +434,14 @@ class GnssFallbackPolicy(
     inMotionWindow = true
     wifiWindow = false
     if (movingEnabled) {
-      startMoving(displaced)
+      startMoving(now, displaced)
     }
   }
 
   /** @param displaced false when only the motion sensors say the device moves. */
-  private fun startMoving(displaced: Boolean) {
+  private fun startMoving(now: Long, displaced: Boolean) {
     moving = true
+    movingSince = now
     stillAtSamePlace = false
     looking = false
     gnssTracking = false
@@ -483,6 +494,15 @@ class GnssFallbackPolicy(
     return true
   }
 
+  /** Like a stop at the same place, so the next motions only start looks, spaced out. */
+  private fun endMovingUnlocated() {
+    moving = false
+    samePlace.reset()
+    stillAtSamePlace = true
+    looks++
+    place = lastAccurate
+  }
+
   /**
    * An accurate location since the window started, or within half a moving interval. A whole
    * interval would skip every other GNSS fix when only GNSS gives accurate locations.
@@ -505,6 +525,7 @@ class GnssFallbackPolicy(
   companion object {
     private const val SAME_PLACE_MIN_METERS = 100f
     private const val FAR_ACCURACY_FACTOR = 3
+    private const val MAX_UNLOCATED_INTERVALS = 2
 
     /**
      * True when two locations can't be told apart: their accuracy circles overlap, or they are
