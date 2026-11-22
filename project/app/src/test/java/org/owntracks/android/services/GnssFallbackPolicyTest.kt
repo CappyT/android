@@ -751,6 +751,29 @@ class GnssFallbackPolicyTest {
   }
 
   @Test
+  fun `After a moving state without an accurate location, the look backoff starts at its end`() {
+    val policy = movingPolicy()
+    val endedAt = 1_000 + interval * 2 + 1
+    policy.onCheck(endedAt)
+    assertEquals(Action.NONE, policy.onMotion(endedAt + movingInterval - 1))
+  }
+
+  @Test
+  fun `A look without an accurate location goes still after one interval`() {
+    val policy = movingPolicy()
+    val endedAt = 1_000 + interval * 2 + 1
+    policy.onCheck(endedAt)
+    val lookAt = endedAt + movingInterval
+    policy.onMotion(lookAt)
+    policy.onCheck(lookAt + movingInterval)
+    policy.onCheck(lookAt + interval)
+    assertTrue(policy.moving)
+    policy.onCheck(lookAt + interval + 1)
+    assertFalse(policy.moving)
+    assertTrue(policy.stillAtSamePlace)
+  }
+
+  @Test
   fun `A stationary activity turns still at the same place into plain still`() {
     val policy = stillAtSamePlacePolicy()
     policy.onActivity(stationary = true)

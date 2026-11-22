@@ -22,9 +22,10 @@ package org.owntracks.android.services
  * a vehicle, the device stops at the same place only for a while, so a motion starts moving away
  * from the place, and the vehicle activity proves the displacement of a look.
  *
- * A moving state without an accurate location for [MAX_UNLOCATED_INTERVALS] intervals ends like a
- * stop at the same place: nothing locates the device, and the probe and the check would run every
- * moving interval for nothing.
+ * A moving state without an accurate location for [MAX_UNLOCATED_INTERVALS] intervals, or a look
+ * without one for an interval, ends like a stop at the same place: nothing locates the device, and
+ * the probe and the check would run every moving interval for nothing. The look backoff then starts
+ * at that end.
  *
  * While moving away from the place, an accurate GNSS fix shows that only GNSS locates the device,
  * so [wantsGnssTracking] asks for a periodic GNSS request instead of one fix per check. It ends
@@ -395,8 +396,9 @@ class GnssFallbackPolicy(
     }
     val lastAccurateAt = lastAccurate?.fixedAt
     if (moving) {
-      if (!gnssTracking && now - maxOf(movingSince, lastAccurateAt ?: 0) > unlocatedLimitMillis) {
-        endMovingUnlocated()
+      val unlocatedLimit = if (looking) intervalMillis else unlocatedLimitMillis
+      if (!gnssTracking && now - maxOf(movingSince, lastAccurateAt ?: 0) > unlocatedLimit) {
+        endMovingUnlocated(now)
         return Action.NONE
       }
       if (gnssTracking) {
@@ -495,7 +497,8 @@ class GnssFallbackPolicy(
   }
 
   /** Like a stop at the same place, so the next motions only start looks, spaced out. */
-  private fun endMovingUnlocated() {
+  private fun endMovingUnlocated(now: Long) {
+    lastMotionWindowAt = now
     moving = false
     samePlace.reset()
     stillAtSamePlace = true
