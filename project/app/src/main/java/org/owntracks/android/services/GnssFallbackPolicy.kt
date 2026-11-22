@@ -175,8 +175,7 @@ class GnssFallbackPolicy(
       motionPending = true
       return Action.NONE
     }
-    startMotionWindow(now, displacement || automotive)
-    looking = look
+    startMotionWindow(now, displacement || automotive, look)
     return Action.START_MOTION_WINDOW
   }
 
@@ -222,7 +221,7 @@ class GnssFallbackPolicy(
       }
     }
     if (moving && !displaced && (looking || !inMotionWindow)) {
-      if (origin?.let { isSamePlace(it, fix) } == true) {
+      if (origin?.let { isSamePlace(it, fix) } ?: looking) {
         return Action.NONE
       }
       markDisplaced()
@@ -429,28 +428,31 @@ class GnssFallbackPolicy(
   /** How often the probe and the check run outside a motion window. */
   fun currentIntervalMillis(): Long = if (moving) movingIntervalMillis else intervalMillis
 
-  private fun startMotionWindow(now: Long, displaced: Boolean) {
+  private fun startMotionWindow(now: Long, displaced: Boolean, look: Boolean = false) {
     lastMotionWindowAt = now
     motionWindowStartedAt = now
     motionPending = false
     inMotionWindow = true
     wifiWindow = false
     if (movingEnabled) {
-      startMoving(now, displaced)
+      startMoving(now, displaced, look)
     }
   }
 
-  /** @param displaced false when only the motion sensors say the device moves. */
-  private fun startMoving(now: Long, displaced: Boolean) {
+  /**
+   * @param displaced false when only the motion sensors say the device moves.
+   * @param look true for a motion after the locations stayed at the same place, or found none.
+   */
+  private fun startMoving(now: Long, displaced: Boolean, look: Boolean = false) {
     moving = true
     movingSince = now
     stillAtSamePlace = false
-    looking = false
+    looking = look
     gnssTracking = false
     origin = place
-    // Without a known place, nothing can show that the device stayed.
+    // Without a known place, nothing can show that the device stayed. A look found no place.
     this.displaced = false
-    if (displaced || place == null) {
+    if (displaced || (place == null && !look)) {
       markDisplaced()
     }
     samePlace.reset()

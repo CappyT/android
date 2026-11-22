@@ -774,6 +774,21 @@ class GnssFallbackPolicyTest {
   }
 
   @Test
+  fun `Without any accurate location, a look requests no GNSS for an inaccurate location`() {
+    val policy = GnssFallbackPolicy(400, interval, movingInterval, motionAware = true)
+    policy.onMotion(0)
+    assertEquals(Action.REQUEST_GNSS, policy.onCheck(movingInterval))
+    val endedAt = interval * 2 + 1
+    policy.onCheck(endedAt)
+    assertTrue(policy.stillAtSamePlace)
+    assertEquals(Action.START_MOTION_WINDOW, policy.onMotion(endedAt + movingInterval))
+    assertEquals(
+        Action.NONE,
+        policy.fresh(1647f, endedAt + movingInterval + 10_000, northMeters = 800.0),
+    )
+  }
+
+  @Test
   fun `A stationary activity turns still at the same place into plain still`() {
     val policy = stillAtSamePlacePolicy()
     policy.onActivity(stationary = true)
