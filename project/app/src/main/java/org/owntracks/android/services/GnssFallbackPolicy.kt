@@ -130,7 +130,7 @@ class GnssFallbackPolicy(
    */
   fun onMovementHint(now: Long, displacement: Boolean, wifiJoined: Boolean = false): Action {
     if (displacement) {
-      gnssRequests.onRadioHint()
+      gnssRequests.onRadioHint(now)
     }
     val look = stillAtSamePlace && !displacement
     if (look && lastMotionWindowAt.let { it != null && now - it < lookBackoffMillis() }) {

@@ -742,6 +742,17 @@ class GnssFallbackPolicyTest {
   }
 
   @Test
+  fun `Radio hints allow at most two sooner GNSS requests after failures`() {
+    val policy = movingPolicy()
+    assertEquals(Action.REQUEST_GNSS, policy.onCheck(130_000))
+    // No check runs in between, like new cells in a subway.
+    assertEquals(Action.REQUEST_GNSS, policy.onRadio(200_000))
+    assertEquals(Action.REQUEST_GNSS, policy.onRadio(260_000))
+    assertEquals(Action.NONE, policy.onRadio(320_000))
+    assertEquals(Action.NONE, policy.onRadio(380_000))
+  }
+
+  @Test
   fun `An accurate location at the same place keeps the GNSS failures`() {
     val policy = movingPolicy()
     assertEquals(Action.REQUEST_GNSS, policy.onCheck(130_000))

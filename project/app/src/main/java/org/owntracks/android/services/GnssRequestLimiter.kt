@@ -5,7 +5,8 @@ package org.owntracks.android.services
  *
  * A request that gets no accurate fix within [TIMEOUT_MILLIS] failed: the sky is probably hidden.
  * The next request then waits one interval, growing to four with more failures, until a GNSS fix or
- * an accurate location at another place. A radio hint allows one request sooner.
+ * an accurate location at another place. A radio hint allows one request sooner, up to
+ * [MAX_HINT_RETRY_FAILURES] failures: in a subway or a tunnel, each new cell would search again.
  *
  * All times are in the [android.os.SystemClock.elapsedRealtime] timebase.
  */
@@ -30,6 +31,7 @@ class GnssRequestLimiter(private val intervalMillis: Long) {
    * @param limitMillis the time between two requests while they don't fail.
    */
   fun requestIfDue(now: Long, limitMillis: Long): Boolean {
+    settle(now)
     val lastRequest = lastRequestAt
     if (lastRequest != null && now - lastRequest < backedOff(limitMillis)) {
       return false
@@ -57,8 +59,10 @@ class GnssRequestLimiter(private val intervalMillis: Long) {
     failures = 0
   }
 
-  fun onRadioHint() {
-    if (failures > 0) {
+  fun onRadioHint(now: Long) {
+    // A request that failed before this hint must count, or the hints never reach the limit.
+    settle(now)
+    if (failures in 1..MAX_HINT_RETRY_FAILURES) {
       retryGranted = true
     }
   }
@@ -76,5 +80,6 @@ class GnssRequestLimiter(private val intervalMillis: Long) {
     const val TIMEOUT_MILLIS = 40_000L
     // One, two, then four intervals.
     private const val MAX_BACKOFF_SHIFT = 2
+    private const val MAX_HINT_RETRY_FAILURES = 2
   }
 }
